@@ -45,8 +45,8 @@
 //                 Transform::from_xyz(0.0, 0.0, 0.0),
 //             ));
 // }
-mod settings;
 pub mod player;
+mod settings;
 use std::f32::consts::{FRAC_PI_2, PI};
 
 use bevy::{
@@ -54,7 +54,10 @@ use bevy::{
     input::mouse::AccumulatedMouseMotion, light::NotShadowCaster, prelude::*,
 };
 
-use crate::{player::{DEFAULT_RENDER_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, spawn_player}, settings::Settings};
+use crate::{
+    player::{DEFAULT_RENDER_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, spawn_player},
+    settings::Settings,
+};
 
 fn main() {
     App::new()
@@ -62,12 +65,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_systems(
             Startup,
-            (
-                spawn_player,
-                spawn_world_model,
-                spawn_lights,
-                spawn_text,
-            ),
+            (spawn_player, spawn_world_model, spawn_lights, spawn_text),
         )
         .add_systems(Update, move_player)
         .run();
@@ -152,9 +150,9 @@ fn move_player(
         const PITCH_LIMIT: f32 = PI - 0.01;
         // const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
-
         // camera_transform.rotation.y = (camera_transform.rotation.y + delta_pitch).clamp(-PITCH_LIMIT, -0.01);
-        camera_transform.rotation.x = (camera_transform.rotation.x + delta_pitch).clamp(0.01, PITCH_LIMIT);
+        camera_transform.rotation.x =
+            (camera_transform.rotation.x + delta_pitch).clamp(0.01, PITCH_LIMIT);
         // camera.rotation.y = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
         // let (yaw, pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
