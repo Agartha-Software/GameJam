@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::{
     asset::Assets,
     camera::{
@@ -9,24 +11,37 @@ use bevy::{
     ecs::{
         children,
         component::Component,
-        system::{Commands, ResMut},
+        query::{With, Without},
+        system::{Commands, Res, ResMut, Single},
     },
-    light::{NotShadowCaster, VolumetricFog},
-    math::primitives::Cuboid,
+    input::{ButtonInput, keyboard::KeyCode, mouse::AccumulatedMouseMotion},
+    light::NotShadowCaster,
+    math::{Dir3, EulerRot, Quat, Vec2, Vec3, Vec3Swizzles, primitives::Cuboid},
     mesh::{Mesh, Mesh3d},
-    pbr::{DistanceFog, FogFalloff, MeshMaterial3d, StandardMaterial},
+    pbr::{MeshMaterial3d, StandardMaterial},
     post_process::bloom::Bloom,
+    reflect::Reflect,
+    time::Time,
     transform::components::Transform,
     utils::default,
 };
 use bevy_atmosphere::prelude::Gradient;
 use bevy_atmosphere::{model::AtmosphereModel, plugin::AtmosphereCamera};
 
+use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, RayHits, SpatialQueryFilter};
+
+use crate::settings::Settings;
+
 #[derive(Debug, Component)]
-pub struct Player;
+pub struct Player {
+    pub movespeed: f32,
+}
 
 #[derive(Debug, Component)]
 pub struct PlayerCamera;
+
+#[derive(Reflect)]
+pub struct PlayerFloorCast;
 
 #[derive(Debug, Component)]
 struct WorldModelCamera;
@@ -39,6 +54,22 @@ pub const DEFAULT_RENDER_LAYER: usize = 0;
 /// Used by the view model camera and the player's arm.
 /// The light source belongs to both layers.
 pub const VIEW_MODEL_RENDER_LAYER: usize = 1;
+
+pub const PLAYER_FLOOR_LAYER: u32 = 2;
+
+/// Acceleration in m/s^2
+pub const PLAYER_ACCELERATION: f32 = 10.0 / 3.6;
+
+/// Velocity in m/s calculated from km/h
+pub const PLAYER_MAX_SPEED: f32 = 2.0 / 3.6;
+/// Velocity squared to optimize comparaisons
+pub const PLAYER_MAX_SPEED_2: f32 = PLAYER_MAX_SPEED * PLAYER_MAX_SPEED;
+
+// Effective gravity in m/s^2 in Z
+pub const PLAYER_BUOYANCY: f32 = -5.;
+
+// Jump velocity
+pub const PLAYER_JUMP_IMPULSE: f32 = 0.5;
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -64,7 +95,7 @@ pub fn spawn_player(
                         ..default()
                     },
                     Projection::from(PerspectiveProjection {
-                        fov: 90.0_f32.to_radians(),
+                        fov: 45.0_f32.to_radians(),
                         ..default()
                     }),
                     Bloom::OLD_SCHOOL,
@@ -103,7 +134,113 @@ pub fn spawn_player(
         ))
         .id();
 
+    let playercast = RayCaster::new(Vec3::Z, Dir3::NEG_Z)
+        .with_max_distance(1.0)
+        .with_max_hits(1)
+        .with_query_filter(SpatialQueryFilter {
+            mask: LayerMask::NONE | PLAYER_FLOOR_LAYER,
+            excluded_entities: Default::default(),
+        });
+
     commands
-        .spawn((Player, Transform::default(), Visibility::default()))
+        .spawn((
+            Player { movespeed: 2.5 },
+            playercast,
+            avian3d::dynamics::prelude::RigidBody::Kinematic,
+            LinearVelocity::default(),
+            Transform::default(),
+            Visibility::default(),
+        ))
         .add_child(camera);
+}
+
+pub fn move_player(
+    time: Res<Time>,
+    inputs: Res<ButtonInput<KeyCode>>,
+    accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
+    player: Single<
+        (&mut Transform, &Player, &RayHits, &mut LinearVelocity),
+        (With<Player>, Without<PlayerCamera>),
+    >,
+    camera: Single<&mut Transform, (With<PlayerCamera>, Without<Player>)>,
+    settings: Res<Settings>,
+) {
+    let (mut player_transform, player, floor_hits, mut velocity) = player.into_inner();
+    let mut camera_transform = camera.into_inner();
+
+    player_transform.translation += velocity.0 * time.delta_secs();
+
+    let delta = accumulated_mouse_motion.delta;
+
+    let mut wishdir = Vec2::default();
+
+    wishdir.y += inputs
+        .pressed(settings.inputs.forward)
+        .then_some(1.0)
+        .unwrap_or_default();
+    wishdir.y -= inputs
+        .pressed(settings.inputs.back)
+        .then_some(1.0)
+        .unwrap_or_default();
+    wishdir.x += inputs
+        .pressed(settings.inputs.right)
+        .then_some(1.0)
+        .unwrap_or_default();
+    wishdir.x -= inputs
+        .pressed(settings.inputs.left)
+        .then_some(1.0)
+        .unwrap_or_default();
+
+    if wishdir != Vec2::ZERO {
+        wishdir = wishdir.normalize();
+        wishdir = (player_transform.rotation * Vec3::from((wishdir, 0.0))).xy();
+    }
+    if floor_hits.is_empty() {
+        wishdir *= 0.1;
+
+        velocity.0.z += PLAYER_BUOYANCY * time.delta_secs() * time.delta_secs();
+    } else {
+        if velocity.0.z <= 0.0 {
+            velocity.0.z = 0.0;
+            if inputs.pressed(settings.inputs.jump) {
+                velocity.0.z = PLAYER_JUMP_IMPULSE;
+            }
+        }
+
+        if velocity.0.xy().dot(velocity.0.xy())
+            > PLAYER_MAX_SPEED_2 * player.movespeed * player.movespeed
+            || wishdir == Vec2::ZERO
+        {
+            wishdir = -velocity.0.xy();
+        }
+    }
+    if wishdir != Vec2::ZERO {
+        let moveforce = wishdir - velocity.0.xy();
+
+        let (mut moveforce, speed) = moveforce.normalize_and_length();
+        moveforce =
+            moveforce * speed.min(PLAYER_ACCELERATION * time.delta_secs() * time.delta_secs());
+
+        // let movedir = wishdir * player.movespeed * time.delta_secs();
+
+        let moveforce = Vec3::from((moveforce, 0.0));
+
+        velocity.0 += moveforce;
+        player_transform.translation += moveforce / 2.0;
+    }
+
+    if delta.x != 0.0 {
+        let delta_yaw = -delta.x * settings.camera_sensitivity * 0.01;
+
+        player_transform.rotate_local_z(delta_yaw);
+    }
+    if delta.y != 0.0 {
+        let delta_pitch = -delta.y * settings.camera_sensitivity * 0.01;
+
+        const PITCH_LIMIT: f32 = PI - 0.01;
+        camera_transform.rotation = Quat::from_rotation_x(
+            (camera_transform.rotation.to_euler(EulerRot::XYZ).0 + delta_pitch)
+                .clamp(0.01, PITCH_LIMIT),
+        );
+    }
 }

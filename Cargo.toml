@@ -21,3 +21,4 @@ debug = true
 [dependencies]
 bevy = { version = "0.18.0", features = ["dynamic_linking", "3d"] }
 bevy_atmosphere = { git = "https://github.com/Arthur-Aillet/bevy_atmosphere", branch = "feat/z-up" }
+avian3d = "0.5"

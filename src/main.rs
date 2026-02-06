@@ -47,23 +47,26 @@
 // }
 pub mod player;
 mod settings;
-use std::f32::consts::PI;
 
-use bevy::{
-    camera::visibility::RenderLayers, color::palettes::tailwind,
-    input::mouse::AccumulatedMouseMotion, prelude::*,
+use avian3d::{
+    PhysicsPlugins,
+    prelude::{Collider, CollisionLayers},
 };
+use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
 use bevy_atmosphere::plugin::AtmospherePlugin;
 
 use crate::{
-    player::{DEFAULT_RENDER_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, spawn_player},
+    player::{
+        DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER, move_player,
+        spawn_player,
+    },
     settings::Settings,
 };
 
 fn main() {
     App::new()
         .init_resource::<Settings>()
-        .add_plugins((DefaultPlugins, AtmospherePlugin))
+        .add_plugins((DefaultPlugins, AtmospherePlugin, PhysicsPlugins::default()))
         .add_systems(
             Startup,
             (spawn_player, spawn_world_model, spawn_lights, spawn_text),
@@ -92,7 +95,19 @@ fn spawn_world_model(
     // The world model camera will render the floor and the cubes spawned in this system.
     // Assigning no `RenderLayers` component defaults to layer 0.
 
-    commands.spawn((Mesh3d(floor), MeshMaterial3d(material.clone())));
+    commands.spawn((
+        Mesh3d(floor.clone()),
+        MeshMaterial3d(material.clone()),
+        Collider::cuboid(20.0, 20.0, 0.1),
+        CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
+    ));
+    commands.spawn((
+        Transform::from_xyz(0.0, 0.0, -1.0).with_scale((10.0, 10.0, 1.0).into()),
+        Mesh3d(floor),
+        MeshMaterial3d(material.clone()),
+        Collider::cuboid(20.0, 20.0, 0.1),
+        CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
+    ));
 
     commands.spawn((
         Mesh3d(cube.clone()),
@@ -133,42 +148,4 @@ fn spawn_text(mut commands: Commands) {
             "Press arrow up to decrease the FOV of the world model.\n",
             "Press arrow down to increase the FOV of the world model."
         )));
-}
-
-fn move_player(
-    accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
-    player: Single<&mut Transform, (With<Player>, Without<PlayerCamera>)>,
-    camera: Single<&mut Transform, (With<PlayerCamera>, Without<Player>)>,
-    settings: Res<Settings>,
-) {
-    let mut player_transform = player.into_inner();
-    let mut camera_transform = camera.into_inner();
-
-    let delta = accumulated_mouse_motion.delta;
-
-    if delta.x != 0.0 {
-        let delta_yaw = -delta.x * settings.camera_sensitivity * 0.01;
-
-        player_transform.rotate_local_z(delta_yaw);
-    }
-    if delta.y != 0.0 {
-        let delta_pitch = -delta.y * settings.camera_sensitivity * 0.01;
-
-        // camera_transform.rotate_local_y(delta_pitch);
-
-        const PITCH_LIMIT: f32 = PI - 0.01;
-        // const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-
-        // camera_transform.rotation.y = (camera_transform.rotation.y + delta_pitch).clamp(-PITCH_LIMIT, -0.01);
-        camera_transform.rotation.x =
-            (camera_transform.rotation.x + delta_pitch).clamp(0.01, PITCH_LIMIT);
-        // camera.rotation.y = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-
-        // let (yaw, pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
-        // let yaw = yaw + delta_yaw;
-
-        // let pitch =
-
-        // transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
-    }
 }
