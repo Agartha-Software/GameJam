@@ -48,17 +48,20 @@
 pub mod player;
 mod settings;
 
+use avian3d::{PhysicsPlugins, prelude::{Collider, CollisionLayers}};
 use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
 
 use crate::{
-    player::{DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER, move_player, spawn_player},
+    player::{
+        DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, PlayerFloorCast, VIEW_MODEL_RENDER_LAYER, move_player, spawn_player
+    },
     settings::Settings,
 };
 
 fn main() {
     App::new()
         .init_resource::<Settings>()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
         .add_systems(
             Startup,
             (spawn_player, spawn_world_model, spawn_lights, spawn_text),
@@ -79,7 +82,19 @@ fn spawn_world_model(
     // The world model camera will render the floor and the cubes spawned in this system.
     // Assigning no `RenderLayers` component defaults to layer 0.
 
-    commands.spawn((Mesh3d(floor), MeshMaterial3d(material.clone())));
+    commands.spawn((
+        Mesh3d(floor.clone()),
+        MeshMaterial3d(material.clone()),
+        Collider::cuboid(20.0, 20.0, 0.1),
+        CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
+    ));
+    commands.spawn((
+        Transform::from_xyz(0.0, 0.0, -1.0).with_scale((10.0, 10.0, 1.0).into()),
+        Mesh3d(floor),
+        MeshMaterial3d(material.clone()),
+        Collider::cuboid(20.0, 20.0, 0.1),
+        CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
+    ));
 
     commands.spawn((
         Mesh3d(cube.clone()),

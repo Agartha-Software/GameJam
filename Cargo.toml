@@ -20,3 +20,4 @@ debug = true
 
 [dependencies]
 bevy = {version = "0.18.0", features = ["dynamic_linking", "3d"]}
+avian3d = "0.5"

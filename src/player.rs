@@ -10,18 +10,21 @@ use bevy::{
     ecs::{
         children,
         component::Component,
-        query::{With, Without},
+        query::{QueryFilter, With, Without},
         system::{Commands, Res, ResMut, Single},
     },
     input::{ButtonInput, keyboard::KeyCode, mouse::AccumulatedMouseMotion},
     light::NotShadowCaster,
-    math::{EulerRot, Quat, Vec2, Vec3, primitives::Cuboid},
+    math::{Dir3, EulerRot, Quat, Vec2, Vec3, Vec3Swizzles, primitives::Cuboid},
     mesh::{Mesh, Mesh3d},
     pbr::{MeshMaterial3d, StandardMaterial},
+    reflect::Reflect,
     time::Time,
     transform::components::Transform,
     utils::default,
 };
+
+use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, RayHits, SpatialQueryFilter};
 
 use crate::settings::Settings;
 
@@ -32,6 +35,9 @@ pub struct Player {
 
 #[derive(Debug, Component)]
 pub struct PlayerCamera;
+
+#[derive(Reflect)]
+pub struct PlayerFloorCast;
 
 #[derive(Debug, Component)]
 struct WorldModelCamera;
@@ -44,6 +50,22 @@ pub const DEFAULT_RENDER_LAYER: usize = 0;
 /// Used by the view model camera and the player's arm.
 /// The light source belongs to both layers.
 pub const VIEW_MODEL_RENDER_LAYER: usize = 1;
+
+pub const PLAYER_FLOOR_LAYER: u32 = 2;
+
+/// Acceleration in m/s^2
+pub const PLAYER_ACCELERATION: f32 = 10.0 / 3.6;
+
+/// Velocity in m/s calculated from km/h
+pub const PLAYER_MAX_SPEED: f32 = 2.0 / 3.6;
+/// Velocity squared to optimize comparaisons
+pub const PLAYER_MAX_SPEED_2: f32 = PLAYER_MAX_SPEED * PLAYER_MAX_SPEED;
+
+// Effective gravity in m/s^2 in Z
+pub const PLAYER_BUOYANCY: f32 = -5.;
+
+// Jump velocity
+pub const PLAYER_JUMP_IMPULSE: f32 = 0.5;
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -63,7 +85,7 @@ pub fn spawn_player(
                     WorldModelCamera,
                     Camera3d::default(),
                     Projection::from(PerspectiveProjection {
-                        fov: 90.0_f32.to_radians(),
+                        fov: 45.0_f32.to_radians(),
                         ..default()
                     }),
                 ),
@@ -96,9 +118,21 @@ pub fn spawn_player(
         ))
         .id();
 
+    let playercast = RayCaster::new(Vec3::Z, Dir3::NEG_Z)
+        .with_max_distance(1.0)
+        .with_max_hits(1)
+        .with_query_filter(SpatialQueryFilter {
+            mask: LayerMask::NONE | PLAYER_FLOOR_LAYER,
+            excluded_entities: Default::default(),
+        })
+        ;
+
     commands
         .spawn((
             Player { movespeed: 2.5 },
+            playercast,
+            avian3d::dynamics::prelude::RigidBody::Kinematic,
+            LinearVelocity::default(),
             Transform::default(),
             Visibility::default(),
         ))
@@ -109,41 +143,75 @@ pub fn move_player(
     time: Res<Time>,
     inputs: Res<ButtonInput<KeyCode>>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
-    player: Single<(&mut Transform, &Player), (With<Player>, Without<PlayerCamera>)>,
+    player: Single<
+        (&mut Transform, &Player, &RayHits, &mut LinearVelocity),
+        (With<Player>, Without<PlayerCamera>),
+    >,
     camera: Single<&mut Transform, (With<PlayerCamera>, Without<Player>)>,
     settings: Res<Settings>,
 ) {
-    let (mut player_transform, player) = player.into_inner();
+
+    let (mut player_transform, player, floor_hits, mut velocity) = player.into_inner();
     let mut camera_transform = camera.into_inner();
+
+    player_transform.translation += velocity.0 * time.delta_secs();
 
     let delta = accumulated_mouse_motion.delta;
 
-    let mut movedir = Vec2::default();
+    let mut wishdir = Vec2::default();
 
-    movedir.y += inputs
+    wishdir.y += inputs
         .pressed(settings.inputs.forward)
         .then_some(1.0)
         .unwrap_or_default();
-    movedir.y -= inputs
+    wishdir.y -= inputs
         .pressed(settings.inputs.back)
         .then_some(1.0)
         .unwrap_or_default();
-    movedir.x += inputs
+    wishdir.x += inputs
         .pressed(settings.inputs.right)
         .then_some(1.0)
         .unwrap_or_default();
-    movedir.x -= inputs
+    wishdir.x -= inputs
         .pressed(settings.inputs.left)
         .then_some(1.0)
         .unwrap_or_default();
 
-    if movedir != Vec2::ZERO {
-        movedir = movedir.normalize();
+    if wishdir != Vec2::ZERO {
+        wishdir = wishdir.normalize();
+        wishdir = (player_transform.rotation * Vec3::from((wishdir, 0.0))).xy();
+    }
+    if floor_hits.is_empty() {
+        wishdir *= 0.1;
 
-        movedir *= player.movespeed * time.delta_secs();
+        velocity.0.z += PLAYER_BUOYANCY * time.delta_secs() * time.delta_secs();
+    } else {
 
-        let moveby = player_transform.rotation * Vec3::from((movedir, 0.0));
-        player_transform.translation += moveby;
+        if velocity.0.z <= 0.0 {
+            velocity.0.z = 0.0;
+            if inputs.pressed(settings.inputs.jump) {
+                velocity.0.z = PLAYER_JUMP_IMPULSE;
+            }
+        }
+
+
+        if velocity.0.xy().dot(velocity.0.xy()) > PLAYER_MAX_SPEED_2 * player.movespeed * player.movespeed || wishdir == Vec2::ZERO {
+            wishdir = -velocity.0.xy();
+        }
+    }
+    if wishdir != Vec2::ZERO {
+
+        let moveforce = wishdir - velocity.0.xy();
+
+        let (mut moveforce, speed) = moveforce.normalize_and_length();
+        moveforce = moveforce * speed.min(PLAYER_ACCELERATION * time.delta_secs() * time.delta_secs());
+
+        // let movedir = wishdir * player.movespeed * time.delta_secs();
+
+        let moveforce = Vec3::from((moveforce, 0.0));
+
+        velocity.0 += moveforce;
+        player_transform.translation += moveforce / 2.0;
     }
 
     if delta.x != 0.0 {
