@@ -102,14 +102,6 @@ fn spawn_world_model(
         CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
     ));
     commands.spawn((
-        Transform::from_xyz(0.0, 0.0, -1.0).with_scale((10.0, 10.0, 1.0).into()),
-        Mesh3d(floor),
-        MeshMaterial3d(material.clone()),
-        Collider::cuboid(20.0, 20.0, 0.1),
-        CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
-    ));
-
-    commands.spawn((
         Mesh3d(cube.clone()),
         MeshMaterial3d(material),
         Transform::from_xyz(0.0, -3.0, 0.25),

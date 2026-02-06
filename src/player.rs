@@ -18,7 +18,7 @@ use bevy::{
     light::NotShadowCaster,
     math::{Dir3, EulerRot, Quat, Vec2, Vec3, Vec3Swizzles, primitives::Cuboid},
     mesh::{Mesh, Mesh3d},
-    pbr::{MeshMaterial3d, StandardMaterial},
+    pbr::{DistanceFog, FogFalloff, MeshMaterial3d, StandardMaterial},
     post_process::bloom::Bloom,
     reflect::Reflect,
     time::Time,
@@ -79,7 +79,11 @@ pub fn spawn_player(
     let arm = meshes.add(Cuboid::new(0.1, 0.1, 0.5));
     let arm_material = materials.add(Color::from(tailwind::TEAL_200));
 
-    commands.insert_resource(AtmosphereModel::new(Gradient::default()));
+    commands.insert_resource(AtmosphereModel::new(Gradient {
+        sky: Color::srgb_u8(8, 10, 20).into(),
+        horizon: Color::srgb_u8(5, 6, 13).into(),
+        ground: Color::srgb_u8(5, 6, 13).into(),
+    }));
     let camera = commands
         .spawn((
             PlayerCamera,
@@ -95,11 +99,16 @@ pub fn spawn_player(
                         ..default()
                     },
                     Projection::from(PerspectiveProjection {
-                        fov: 45.0_f32.to_radians(),
+                        fov: 80.0_f32.to_radians(),
                         ..default()
                     }),
                     Bloom::OLD_SCHOOL,
                     Tonemapping::TonyMcMapface,
+                    DistanceFog {
+                        color: Color::srgb_u8(5, 6, 13),
+                        falloff: FogFalloff::Exponential { density: 0.6 },
+                        ..default()
+                    },
                 ),
                 // Spawn view model camera.
                 (
@@ -218,8 +227,7 @@ pub fn move_player(
         let moveforce = wishdir - velocity.0.xy();
 
         let (mut moveforce, speed) = moveforce.normalize_and_length();
-        moveforce =
-            moveforce * speed.min(PLAYER_ACCELERATION * time.delta_secs() * time.delta_secs());
+        moveforce = moveforce * speed.min(PLAYER_ACCELERATION * time.delta_secs());
 
         // let movedir = wishdir * player.movespeed * time.delta_secs();
 
