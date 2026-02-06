@@ -78,7 +78,15 @@ fn spawn_world_model(
 ) {
     let floor = meshes.add(Plane3d::new(Vec3::Z, Vec2::splat(10.0)));
     let cube = meshes.add(Cuboid::new(2.0, 1.0, 0.5));
-    let material = materials.add(Color::WHITE);
+    let material_emissive = materials.add(StandardMaterial {
+        emissive: LinearRgba::rgb(1000.0, 1000.0, 1000.0),
+        ..default()
+    });
+
+    let material = materials.add(StandardMaterial {
+        base_color: Color::WHITE,
+        ..default()
+    });
 
     // The world model camera will render the floor and the cubes spawned in this system.
     // Assigning no `RenderLayers` component defaults to layer 0.
@@ -87,13 +95,13 @@ fn spawn_world_model(
 
     commands.spawn((
         Mesh3d(cube.clone()),
-        MeshMaterial3d(material.clone()),
+        MeshMaterial3d(material),
         Transform::from_xyz(0.0, -3.0, 0.25),
     ));
 
     commands.spawn((
         Mesh3d(cube),
-        MeshMaterial3d(material),
+        MeshMaterial3d(material_emissive),
         Transform::from_xyz(0.75, 0.0, 1.75),
     ));
 }

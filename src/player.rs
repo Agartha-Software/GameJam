@@ -1,19 +1,23 @@
 use bevy::{
     asset::Assets,
     camera::{
-        Camera, Camera3d, PerspectiveProjection, Projection,
+        Camera, Camera3d, ClearColorConfig, PerspectiveProjection, Projection,
         visibility::{RenderLayers, Visibility},
     },
     color::{Color, palettes::tailwind},
+    core_pipeline::tonemapping::Tonemapping,
     ecs::{
         children,
         component::Component,
         system::{Commands, ResMut},
     },
-    light::NotShadowCaster,
+    light::{
+        AmbientLight, EnvironmentMapLight, GlobalAmbientLight, NotShadowCaster, VolumetricFog,
+    },
     math::{Vec3, primitives::Cuboid},
     mesh::{Mesh, Mesh3d},
-    pbr::{MeshMaterial3d, StandardMaterial},
+    pbr::{DistanceFog, FogFalloff, MeshMaterial3d, StandardMaterial},
+    post_process::bloom::Bloom,
     transform::components::Transform,
     utils::default,
 };
@@ -53,10 +57,21 @@ pub fn spawn_player(
                 (
                     WorldModelCamera,
                     Camera3d::default(),
+                    Camera {
+                        clear_color: ClearColorConfig::Custom(Color::srgb_u8(5, 22, 48)),
+                        ..default()
+                    },
                     Projection::from(PerspectiveProjection {
                         fov: 90.0_f32.to_radians(),
                         ..default()
                     }),
+                    Bloom::OLD_SCHOOL,
+                    Tonemapping::TonyMcMapface,
+                    DistanceFog {
+                        color: Color::srgb_u8(5, 22, 48),
+                        falloff: FogFalloff::Exponential { density: 0.6 },
+                        ..default()
+                    },
                 ),
                 // Spawn view model camera.
                 (
@@ -66,10 +81,16 @@ pub fn spawn_player(
                         order: 1,
                         ..default()
                     },
+                    Bloom::OLD_SCHOOL,
                     Projection::from(PerspectiveProjection {
                         fov: 70.0_f32.to_radians(),
                         ..default()
                     }),
+                    VolumetricFog {
+                        ambient_color: Color::srgb_u8(5, 22, 48),
+                        ambient_intensity: 0.0f32,
+                        ..default()
+                    },
                     // Only render objects belonging to the view model.
                     RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
                 ),
