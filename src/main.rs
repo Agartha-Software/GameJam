@@ -45,16 +45,15 @@
 //                 Transform::from_xyz(0.0, 0.0, 0.0),
 //             ));
 // }
-mod settings;
 pub mod player;
-use std::f32::consts::{FRAC_PI_2, PI};
+mod settings;
 
-use bevy::{
-    camera::visibility::RenderLayers, color::palettes::tailwind,
-    input::mouse::AccumulatedMouseMotion, light::NotShadowCaster, prelude::*,
+use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
+
+use crate::{
+    player::{DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER, move_player, spawn_player},
+    settings::Settings,
 };
-
-use crate::{player::{DEFAULT_RENDER_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, spawn_player}, settings::Settings};
 
 fn main() {
     App::new()
@@ -62,12 +61,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_systems(
             Startup,
-            (
-                spawn_player,
-                spawn_world_model,
-                spawn_lights,
-                spawn_text,
-            ),
+            (spawn_player, spawn_world_model, spawn_lights, spawn_text),
         )
         .add_systems(Update, move_player)
         .run();
@@ -126,42 +120,4 @@ fn spawn_text(mut commands: Commands) {
             "Press arrow up to decrease the FOV of the world model.\n",
             "Press arrow down to increase the FOV of the world model."
         )));
-}
-
-fn move_player(
-    accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
-    player: Single<&mut Transform, (With<Player>, Without<PlayerCamera>)>,
-    camera: Single<&mut Transform, (With<PlayerCamera>, Without<Player>)>,
-    settings: Res<Settings>,
-) {
-    let mut player_transform = player.into_inner();
-    let mut camera_transform = camera.into_inner();
-
-    let delta = accumulated_mouse_motion.delta;
-
-    if delta.x != 0.0 {
-        let delta_yaw = -delta.x * settings.camera_sensitivity * 0.01;
-
-        player_transform.rotate_local_z(delta_yaw);
-    }
-    if delta.y != 0.0 {
-        let delta_pitch = -delta.y * settings.camera_sensitivity * 0.01;
-
-        // camera_transform.rotate_local_y(delta_pitch);
-
-        const PITCH_LIMIT: f32 = PI - 0.01;
-        // const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-
-
-        // camera_transform.rotation.y = (camera_transform.rotation.y + delta_pitch).clamp(-PITCH_LIMIT, -0.01);
-        camera_transform.rotation.x = (camera_transform.rotation.x + delta_pitch).clamp(0.01, PITCH_LIMIT);
-        // camera.rotation.y = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-
-        // let (yaw, pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
-        // let yaw = yaw + delta_yaw;
-
-        // let pitch =
-
-        // transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
-    }
 }
