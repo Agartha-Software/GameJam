@@ -11,16 +11,16 @@ use bevy::{
         component::Component,
         system::{Commands, ResMut},
     },
-    light::{
-        AmbientLight, EnvironmentMapLight, GlobalAmbientLight, NotShadowCaster, VolumetricFog,
-    },
-    math::{Vec3, primitives::Cuboid},
+    light::{NotShadowCaster, VolumetricFog},
+    math::primitives::Cuboid,
     mesh::{Mesh, Mesh3d},
     pbr::{DistanceFog, FogFalloff, MeshMaterial3d, StandardMaterial},
     post_process::bloom::Bloom,
     transform::components::Transform,
     utils::default,
 };
+use bevy_atmosphere::prelude::Gradient;
+use bevy_atmosphere::{model::AtmosphereModel, plugin::AtmosphereCamera};
 
 #[derive(Debug, Component)]
 pub struct Player;
@@ -48,6 +48,7 @@ pub fn spawn_player(
     let arm = meshes.add(Cuboid::new(0.1, 0.1, 0.5));
     let arm_material = materials.add(Color::from(tailwind::TEAL_200));
 
+    commands.insert_resource(AtmosphereModel::new(Gradient::default()));
     let camera = commands
         .spawn((
             PlayerCamera,
@@ -57,8 +58,9 @@ pub fn spawn_player(
                 (
                     WorldModelCamera,
                     Camera3d::default(),
+                    AtmosphereCamera::default(),
                     Camera {
-                        clear_color: ClearColorConfig::Custom(Color::srgb_u8(5, 22, 48)),
+                        clear_color: ClearColorConfig::Custom(Color::srgb_u8(0, 0, 0)),
                         ..default()
                     },
                     Projection::from(PerspectiveProjection {
@@ -67,30 +69,23 @@ pub fn spawn_player(
                     }),
                     Bloom::OLD_SCHOOL,
                     Tonemapping::TonyMcMapface,
-                    DistanceFog {
-                        color: Color::srgb_u8(5, 22, 48),
-                        falloff: FogFalloff::Exponential { density: 0.6 },
-                        ..default()
-                    },
                 ),
                 // Spawn view model camera.
                 (
                     Camera3d::default(),
+                    AtmosphereCamera::default(),
                     Camera {
+                        clear_color: ClearColorConfig::Custom(Color::srgb_u8(0, 0, 0)),
                         // Bump the order to render on top of the world model.
                         order: 1,
                         ..default()
                     },
                     Bloom::OLD_SCHOOL,
+                    Tonemapping::TonyMcMapface,
                     Projection::from(PerspectiveProjection {
                         fov: 70.0_f32.to_radians(),
                         ..default()
                     }),
-                    VolumetricFog {
-                        ambient_color: Color::srgb_u8(5, 22, 48),
-                        ambient_intensity: 0.0f32,
-                        ..default()
-                    },
                     // Only render objects belonging to the view model.
                     RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
                 ),

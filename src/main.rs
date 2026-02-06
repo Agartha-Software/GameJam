@@ -47,12 +47,13 @@
 // }
 pub mod player;
 mod settings;
-use std::f32::consts::{FRAC_PI_2, PI};
+use std::f32::consts::PI;
 
 use bevy::{
     camera::visibility::RenderLayers, color::palettes::tailwind,
-    input::mouse::AccumulatedMouseMotion, light::NotShadowCaster, prelude::*,
+    input::mouse::AccumulatedMouseMotion, prelude::*,
 };
+use bevy_atmosphere::plugin::AtmospherePlugin;
 
 use crate::{
     player::{DEFAULT_RENDER_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, spawn_player},
@@ -62,7 +63,7 @@ use crate::{
 fn main() {
     App::new()
         .init_resource::<Settings>()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, AtmospherePlugin))
         .add_systems(
             Startup,
             (spawn_player, spawn_world_model, spawn_lights, spawn_text),
