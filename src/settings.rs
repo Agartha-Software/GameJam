@@ -4,6 +4,7 @@ use bevy::{ecs::resource::Resource, input::keyboard::KeyCode};
 pub struct Settings {
     pub camera_sensitivity: f32,
     pub inputs: Inputs,
+    pub chromatic_aberation: f32,
 }
 
 pub struct Inputs {
@@ -31,6 +32,7 @@ impl Default for Settings {
         Self {
             camera_sensitivity: 1.0,
             inputs: Default::default(),
+            chromatic_aberation: 1.2,
         }
     }
 }
