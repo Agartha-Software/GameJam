@@ -7,10 +7,16 @@ authors = ["Arthur Aillet", "Julian Scott"]
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
 opt-level = 1
+debug = "line-tables-only"
 
 # Enable a large amount of optimization in the dev profile for dependencies.
 [profile.dev.package."*"]
 opt-level = 3
+debug = false
+
+[profile.debugging]
+inherits = "dev"
+debug = true
 
 [dependencies]
 bevy = {version = "0.18.0", features = ["dynamic_linking"]}
