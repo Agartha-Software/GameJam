@@ -45,6 +45,7 @@
 //                 Transform::from_xyz(0.0, 0.0, 0.0),
 //             ));
 // }
+pub mod particle;
 pub mod player;
 mod settings;
 
@@ -54,6 +55,7 @@ use avian3d::{
 };
 use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
 use bevy_atmosphere::plugin::AtmospherePlugin;
+use particle::ParticlePlugin;
 
 use crate::{
     player::{
@@ -66,7 +68,12 @@ use crate::{
 fn main() {
     App::new()
         .init_resource::<Settings>()
-        .add_plugins((DefaultPlugins, AtmospherePlugin, PhysicsPlugins::default()))
+        .add_plugins((
+            DefaultPlugins,
+            AtmospherePlugin,
+            ParticlePlugin,
+            PhysicsPlugins::default(),
+        ))
         .add_systems(
             Startup,
             (spawn_player, spawn_world_model, spawn_lights, spawn_text),
@@ -107,11 +114,11 @@ fn spawn_world_model(
         Transform::from_xyz(0.0, -3.0, 0.25),
     ));
 
-    commands.spawn((
-        Mesh3d(cube),
-        MeshMaterial3d(material_emissive),
-        Transform::from_xyz(0.75, 0.0, 1.75),
-    ));
+    // commands.spawn((
+    //     Mesh3d(cube),
+    //     MeshMaterial3d(material_emissive),
+    //     Transform::from_xyz(0.75, 0.0, 1.75),
+    // ));
 }
 
 fn spawn_lights(mut commands: Commands) {
