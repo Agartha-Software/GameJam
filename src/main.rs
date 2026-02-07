@@ -34,8 +34,8 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        title: "Aspect Ratio Mask".into(),
-                        name: Some("Aspect Ratio Mask".into()),
+                        title: "550fathom".into(),
+                        name: Some("550fathom".into()),
                         ..default()
                     }),
                     ..default()
