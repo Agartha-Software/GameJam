@@ -10,10 +10,10 @@ use bevy_atmosphere::prelude::*;
 
 use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter};
 
+use crate::player::flashlight::Flashlight;
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
 use crate::player::{
-    DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER,
-    WorldModelCamera,
+    PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, WorldModelCamera,
 };
 
 pub fn spawn_player(
@@ -87,18 +87,16 @@ pub fn spawn_player(
                 (
                     SpotLight {
                         color: Color::WHITE,
-                        intensity: 1000000.0,
+                        intensity: 2000000.0,
                         shadows_enabled: true,
                         range: 10.0,
-                        radius: 0.2,
-                        outer_angle: PI / 2.0 * 0.4,
+                        radius: 0.1,
+                        outer_angle: PI / 2.0 * 0.45,
                         inner_angle: 0.,
                         ..default()
                     },
-                    Transform::from_xyz(0., 0.1, 0.1)
-                        .looking_to(Vec3::new(0., -0.05, -1.), Vec3::Z),
-                    // The light source illuminates both the world model and the view model.
-                    //RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER]),
+                    Flashlight,
+                    Transform::from_xyz(0., 0., 0.5).looking_to(Vec3::new(0., 0.1, -1.), Vec3::Z),
                 )
             ],
         ))

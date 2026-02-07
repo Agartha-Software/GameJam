@@ -50,7 +50,7 @@ fn main() {
             UiPlugin,
             PlayerPlugin,
         ))
-        .add_systems(Startup, (spawn_world_model, spawn_lights))
+        .add_systems(Startup, spawn_world_model)
         .run();
 }
 
@@ -67,7 +67,7 @@ fn spawn_world_model(
     });
 
     let material = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
+        base_color: Color::linear_rgb(0.1, 0.1, 0.1),
         ..default()
     });
 
@@ -90,18 +90,5 @@ fn spawn_world_model(
     //     Mesh3d(cube),
     //     MeshMaterial3d(material_emissive),
     //     Transform::from_xyz(0.75, 0.0, 1.75),
-    // ));
-}
-
-fn spawn_lights(mut commands: Commands) {
-    // commands.spawn((
-    //     PointLight {
-    //         color: Color::from(tailwind::ROSE_300),
-    //         shadows_enabled: true,
-    //         ..default()
-    //     },
-    //     Transform::from_xyz(-2.0, -0.75, 4.0),
-    //     // The light source illuminates both the world model and the view model.
-    //     RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER]),
     // ));
 }
