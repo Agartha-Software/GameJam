@@ -27,3 +27,4 @@ bevy = { version = "0.18.0", features = [
 bevy_atmosphere = { git = "https://github.com/Arthur-Aillet/bevy_atmosphere", branch = "feat/z-up" }
 avian3d = "0.5"
 bevy_hanabi = "0.18"
+bevy_aspect_ratio_mask = "0.4.0"

@@ -1,13 +1,15 @@
 pub mod debug;
 pub mod particle;
 pub mod player;
-mod settings;
+pub mod settings;
+pub mod ui;
 
 use avian3d::{
     PhysicsPlugins,
     prelude::{Collider, CollisionLayers},
 };
 use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
+use bevy_aspect_ratio_mask::{AspectRatioMask, AspectRatioPlugin, Resolution};
 use bevy_atmosphere::plugin::AtmospherePlugin;
 use particle::ParticlePlugin;
 
@@ -18,22 +20,39 @@ use crate::{
         spawn_player,
     },
     settings::Settings,
+    ui::UiPlugin,
 };
 
 fn main() {
     App::new()
         .init_resource::<Settings>()
         .add_plugins((
-            DefaultPlugins,
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Aspect Ratio Mask".into(),
+                        name: Some("Aspect Ratio Mask".into()),
+                        ..default()
+                    }),
+                    ..default()
+                }),
+            AspectRatioPlugin {
+                resolution: Resolution {
+                    width: 16.0,
+                    height: 9.0,
+                },
+                mask: AspectRatioMask {
+                    color: Color::BLACK,
+                },
+            },
             AtmospherePlugin,
             ParticlePlugin,
             PhysicsPlugins::default(),
             DebugPlugin,
+            UiPlugin,
         ))
-        .add_systems(
-            Startup,
-            (spawn_player, spawn_world_model, spawn_lights, spawn_text),
-        )
+        .add_systems(Startup, (spawn_player, spawn_world_model, spawn_lights))
         .add_systems(Update, move_player)
         .run();
 }
@@ -88,19 +107,4 @@ fn spawn_lights(mut commands: Commands) {
         // The light source illuminates both the world model and the view model.
         RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER]),
     ));
-}
-
-fn spawn_text(mut commands: Commands) {
-    commands
-        .spawn(Node {
-            position_type: PositionType::Absolute,
-            bottom: px(12),
-            left: px(12),
-            ..default()
-        })
-        .with_child(Text::new(concat!(
-            "Move the camera with your mouse.\n",
-            "Press arrow up to decrease the FOV of the world model.\n",
-            "Press arrow down to increase the FOV of the world model."
-        )));
 }

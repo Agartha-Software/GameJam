@@ -8,7 +8,7 @@ impl Plugin for DebugPlugin {
         app.add_plugins(FpsOverlayPlugin {
             config: FpsOverlayConfig {
                 text_config: TextFont {
-                    font_size: 20.0,
+                    font_size: 0.3,
                     font: default(),
                     ..default()
                 },

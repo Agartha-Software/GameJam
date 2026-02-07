@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use bevy::prelude::*;
 use bevy::{
     asset::Assets,
     camera::{
@@ -44,7 +45,7 @@ pub struct PlayerCamera;
 pub struct PlayerFloorCast;
 
 #[derive(Debug, Component)]
-struct WorldModelCamera;
+pub struct WorldModelCamera;
 
 /// Used implicitly by all entities without a `RenderLayers` component.
 /// Our world model camera and all objects other than the player are on this layer.
@@ -115,7 +116,6 @@ pub fn spawn_player(
                 // Spawn view model camera.
                 (
                     Camera3d::default(),
-                    AtmosphereCamera::default(),
                     Camera {
                         clear_color: ClearColorConfig::Custom(Color::srgb_u8(0, 0, 0)),
                         // Bump the order to render on top of the world model.
@@ -123,6 +123,7 @@ pub fn spawn_player(
                         ..default()
                     },
                     Bloom::OLD_SCHOOL,
+                    IsDefaultUiCamera,
                     Tonemapping::TonyMcMapface,
                     Projection::from(PerspectiveProjection {
                         fov: 70.0_f32.to_radians(),
