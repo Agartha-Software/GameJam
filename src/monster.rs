@@ -136,7 +136,8 @@ pub fn load_monster_gltf(
     let material_eyes = materials.add(material_eyes);
 
     let mut material_teeth = StandardMaterial::default();
-    material_teeth.base_color = Color::linear_rgb(20.0, 20.0, 20.0);
+    material_teeth.base_color = Color::linear_rgb(10.0, 10.0, 10.0);
+    material_teeth.emissive = LinearRgba::rgb(10.0, 10.0, 10.0);
     let material_teeth = materials.add(material_teeth);
 
     commands.insert_resource(MonsterAssets {

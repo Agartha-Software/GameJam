@@ -17,7 +17,7 @@ pub fn control_flashlight(
             cam.falloff = FogFalloff::Exponential { density: 0.2 };
         } else {
             **flashlight = Visibility::Hidden;
-            cam.falloff = FogFalloff::Exponential { density: 0.5 };
+            cam.falloff = FogFalloff::Exponential { density: 0.3 };
         }
     }
 }

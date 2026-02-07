@@ -29,7 +29,7 @@ pub fn setup_world(mut ambient: ResMut<GlobalAmbientLight>, mut commands: Comman
 
     *ambient = GlobalAmbientLight {
         color: Color::srgb_u8(7, 8, 18).into(),
-        brightness: 20000.0,
+        brightness: 10000.0,
         affects_lightmapped_meshes: true,
     };
 }
