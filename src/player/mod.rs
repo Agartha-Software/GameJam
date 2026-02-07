@@ -1,37 +1,23 @@
+pub mod spawn;
+
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use bevy::{
-    asset::Assets,
-    camera::{
-        Camera, Camera3d, ClearColorConfig, PerspectiveProjection, Projection,
-        visibility::{RenderLayers, Visibility},
-    },
-    color::{Color, palettes::tailwind},
-    core_pipeline::tonemapping::Tonemapping,
     ecs::{
-        children,
         component::Component,
         query::{With, Without},
-        system::{Commands, Res, ResMut, Single},
+        system::{Res, Single},
     },
     input::{ButtonInput, keyboard::KeyCode, mouse::AccumulatedMouseMotion},
-    light::NotShadowCaster,
-    math::{Dir3, EulerRot, Quat, Vec2, Vec3, Vec3Swizzles, primitives::Cuboid},
-    mesh::{Mesh, Mesh3d},
-    pbr::{DistanceFog, FogFalloff, MeshMaterial3d, StandardMaterial},
-    post_process::bloom::Bloom,
-    reflect::Reflect,
+    math::{EulerRot, Quat, Vec2, Vec3, Vec3Swizzles},
     time::Time,
     transform::components::Transform,
-    utils::default,
 };
-use bevy_atmosphere::prelude::Gradient;
-use bevy_atmosphere::{model::AtmosphereModel, plugin::AtmosphereCamera};
 
-use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, RayHits, SpatialQueryFilter};
-
+use crate::player::spawn::spawn_player;
 use crate::settings::{self, Settings};
+use avian3d::prelude::{LinearVelocity, RayHits};
 
 #[derive(Debug, Component)]
 pub struct Player {
@@ -74,99 +60,16 @@ pub const PLAYER_JUMP_IMPULSE: f32 = 0.5;
 
 pub const FLOOR_RAY_PRE_LEN: f32 = 1.0;
 
-pub fn spawn_player(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let arm = meshes.add(Cuboid::new(0.1, 0.1, 0.5));
-    let arm_material = materials.add(Color::from(tailwind::TEAL_200));
+pub struct PlayerPlugin;
 
-    commands.insert_resource(AtmosphereModel::new(Gradient {
-        sky: Color::srgb_u8(8, 10, 20).into(),
-        horizon: Color::srgb_u8(5, 6, 13).into(),
-        ground: Color::srgb_u8(5, 6, 13).into(),
-    }));
-    let camera = commands
-        .spawn((
-            PlayerCamera,
-            Transform::from_xyz(0.0, 0.0, 1.6), //.looking_to(Vec3::X, Vec3::Z),
-            Visibility::default(),
-            children![
-                (
-                    WorldModelCamera,
-                    Camera3d::default(),
-                    AtmosphereCamera::default(),
-                    Camera {
-                        clear_color: ClearColorConfig::Custom(Color::srgb_u8(0, 0, 0)),
-                        ..default()
-                    },
-                    Projection::from(PerspectiveProjection {
-                        fov: 80.0_f32.to_radians(),
-                        ..default()
-                    }),
-                    Bloom::OLD_SCHOOL,
-                    Tonemapping::TonyMcMapface,
-                    DistanceFog {
-                        color: Color::srgb_u8(5, 6, 13),
-                        falloff: FogFalloff::Exponential { density: 0.6 },
-                        ..default()
-                    },
-                ),
-                // Spawn view model camera.
-                (
-                    Camera3d::default(),
-                    Camera {
-                        clear_color: ClearColorConfig::Custom(Color::srgb_u8(0, 0, 0)),
-                        // Bump the order to render on top of the world model.
-                        order: 1,
-                        ..default()
-                    },
-                    Bloom::OLD_SCHOOL,
-                    IsDefaultUiCamera,
-                    Tonemapping::TonyMcMapface,
-                    Projection::from(PerspectiveProjection {
-                        fov: 70.0_f32.to_radians(),
-                        ..default()
-                    }),
-                    // Only render objects belonging to the view model.
-                    RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
-                ),
-                // Spawn the player's right arm.
-                (
-                    Mesh3d(arm),
-                    MeshMaterial3d(arm_material),
-                    Transform::from_xyz(0.2, -0.1, -0.25),
-                    // Ensure the arm is only rendered by the view model camera.
-                    RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
-                    // The arm is free-floating, so shadows would look weird.
-                    NotShadowCaster,
-                ),
-            ],
-        ))
-        .id();
-
-    let playercast = RayCaster::new(Vec3::Z * FLOOR_RAY_PRE_LEN, Dir3::NEG_Z)
-        .with_max_distance(FLOOR_RAY_PRE_LEN)
-        .with_max_hits(1)
-        .with_query_filter(SpatialQueryFilter {
-            mask: LayerMask::NONE | PLAYER_FLOOR_LAYER,
-            excluded_entities: Default::default(),
-        });
-
-    commands
-        .spawn((
-            Player { movespeed: 2.5 },
-            playercast,
-            avian3d::dynamics::prelude::RigidBody::Kinematic,
-            LinearVelocity::default(),
-            Transform::default(),
-            Visibility::default(),
-        ))
-        .add_child(camera);
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, spawn_player)
+            .add_systems(Update, move_player);
+    }
 }
 
-pub fn move_player_camera(
+fn move_player_camera(
     delta: &Vec2,
     player_transform: &mut Transform,
     camera_transform: &mut Transform,
@@ -188,7 +91,7 @@ pub fn move_player_camera(
     }
 }
 
-pub fn get_wishdir(inputs: &ButtonInput<KeyCode>, keys: &settings::Inputs) -> Vec2 {
+fn get_wishdir(inputs: &ButtonInput<KeyCode>, keys: &settings::Inputs) -> Vec2 {
     let mut wishdir = Vec2::default();
 
     wishdir.y += inputs
@@ -204,7 +107,7 @@ pub fn get_wishdir(inputs: &ButtonInput<KeyCode>, keys: &settings::Inputs) -> Ve
     wishdir
 }
 
-pub fn move_player(
+fn move_player(
     time: Res<Time>,
     inputs: Res<ButtonInput<KeyCode>>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,

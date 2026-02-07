@@ -15,10 +15,7 @@ use particle::ParticlePlugin;
 
 use crate::{
     debug::DebugPlugin,
-    player::{
-        DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER, move_player,
-        spawn_player,
-    },
+    player::{DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, PlayerPlugin, VIEW_MODEL_RENDER_LAYER},
     settings::Settings,
     ui::UiPlugin,
 };
@@ -51,9 +48,9 @@ fn main() {
             PhysicsPlugins::default(),
             DebugPlugin,
             UiPlugin,
+            PlayerPlugin,
         ))
-        .add_systems(Startup, (spawn_player, spawn_world_model, spawn_lights))
-        .add_systems(Update, move_player)
+        .add_systems(Startup, (spawn_world_model, spawn_lights))
         .run();
 }
 
