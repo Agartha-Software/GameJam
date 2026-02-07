@@ -1,50 +1,3 @@
-// pub mod world;
-
-// use bevy::{
-//     DefaultPlugins, app::Startup, asset::{AssetServer, Assets}, camera::Camera3d, color::Srgba, ecs::{component::Component, query::With, system::{Commands, Query, Res, ResMut}}, input::{ButtonInput, keyboard::KeyCode}, math::{Vec3, primitives::{Plane3d, Sphere}}, mesh::{Mesh, Mesh3d}, pbr::{MeshMaterial3d, StandardMaterial}, prelude::App, transform::components::Transform
-// };
-
-// #[derive(Component)]
-// struct Player{}
-
-// fn setup_graphics(
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<StandardMaterial>>,
-//     asset_server: Res<AssetServer>,
-// ) {
-
-//     let sphere_mesh = meshes.add(Sphere::new(0.45));
-//     let plane_mesh = meshes.add(Plane3d::new((0f32, 0f32, 1f32).into(), (25f32, 25f32).into()));
-
-//     // Add a camera so we can see the debug-render.
-//     commands.spawn((
-//         Player{},
-//         Camera3d::default(),
-//         Transform::from_xyz(-3.0, 3.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-//     ));
-
-//     commands.spawn((
-//                 Mesh3d(sphere_mesh.clone()),
-//                 MeshMaterial3d(materials.add(StandardMaterial {
-//                     base_color: Srgba::hex("#ffd891").unwrap().into(),
-//                     // vary key PBR parameters on a grid of spheres to show the effect
-//                     ..Default::default()
-//                 })),
-//                 Transform::from_xyz(0.0, 0.0, 0.0),
-
-//             ));
-
-//     commands.spawn((
-//                 Mesh3d(plane_mesh.clone()),
-//                 MeshMaterial3d(materials.add(StandardMaterial {
-//                     base_color: Srgba::hex("#ff1111").unwrap().into(),
-//                     // vary key PBR parameters on a grid of spheres to show the effect
-//                     ..Default::default()
-//                 })),
-//                 Transform::from_xyz(0.0, 0.0, 0.0),
-//             ));
-// }
 pub mod particle;
 pub mod player;
 mod settings;
@@ -53,7 +6,12 @@ use avian3d::{
     PhysicsPlugins,
     prelude::{Collider, CollisionLayers},
 };
-use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
+use bevy::{
+    camera::visibility::RenderLayers,
+    color::palettes::tailwind,
+    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
+    prelude::*,
+};
 use bevy_atmosphere::plugin::AtmospherePlugin;
 use particle::ParticlePlugin;
 
@@ -73,6 +31,23 @@ fn main() {
             AtmospherePlugin,
             ParticlePlugin,
             PhysicsPlugins::default(),
+            FpsOverlayPlugin {
+                config: FpsOverlayConfig {
+                    text_config: TextFont {
+                        font_size: 20.0,
+                        font: default(),
+                        ..default()
+                    },
+                    text_color: Color::srgb(0.0, 1.0, 0.0),
+                    refresh_interval: core::time::Duration::from_millis(100),
+                    enabled: true,
+                    frame_time_graph_config: FrameTimeGraphConfig {
+                        enabled: true,
+                        min_fps: 30.0,
+                        target_fps: 144.0,
+                    },
+                },
+            },
         ))
         .add_systems(
             Startup,
