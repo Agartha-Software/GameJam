@@ -61,7 +61,7 @@ fn spawn_world_model(
 ) {
     let floor = meshes.add(Plane3d::new(Vec3::Z, Vec2::splat(10.0)));
     let cube = meshes.add(Cuboid::new(2.0, 1.0, 0.5));
-    let material_emissive = materials.add(StandardMaterial {
+    let _material_emissive = materials.add(StandardMaterial {
         emissive: LinearRgba::rgb(1000.0, 1000.0, 1000.0),
         ..default()
     });

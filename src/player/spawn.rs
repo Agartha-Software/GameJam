@@ -24,9 +24,9 @@ use bevy_atmosphere::{model::AtmosphereModel, plugin::AtmosphereCamera};
 
 use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter};
 
+use crate::player::movement::FLOOR_RAY_PRE_LEN;
 use crate::player::{
-    FLOOR_RAY_PRE_LEN, PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER,
-    WorldModelCamera,
+    PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, WorldModelCamera,
 };
 
 pub fn spawn_player(
