@@ -29,6 +29,9 @@ fn grab_mouse(mut cursor_options: Single<&mut CursorOptions>, key: Res<ButtonInp
     }
 }
 
+#[derive(Component)]
+pub struct OverlayImage;
+
 fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud>) {
     commands.entity(hud.0).with_children(|parent| {
         parent.spawn((
@@ -38,7 +41,9 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud
                 justify_self: JustifySelf::Stretch,
                 ..Default::default()
             },
+            Visibility::Visible,
             ImageNode::new(asset_server.load("overlay.png")),
+            OverlayImage,
         ));
     });
 }

@@ -1,8 +1,10 @@
+mod flashlight;
 mod movement;
 pub mod spawn;
 
 use bevy::prelude::*;
 
+use crate::player::flashlight::control_flashlight;
 use crate::player::movement::move_player;
 use crate::player::spawn::spawn_player;
 
@@ -36,6 +38,6 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_player)
-            .add_systems(Update, move_player);
+            .add_systems(Update, (move_player, control_flashlight));
     }
 }

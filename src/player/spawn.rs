@@ -10,10 +10,10 @@ use bevy_atmosphere::prelude::*;
 
 use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter};
 
+use crate::player::flashlight::Flashlight;
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
 use crate::player::{
-    DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER,
-    WorldModelCamera,
+    PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, WorldModelCamera,
 };
 
 pub fn spawn_player(
@@ -25,10 +25,14 @@ pub fn spawn_player(
     let arm_material = materials.add(Color::from(tailwind::TEAL_200));
 
     commands.insert_resource(AtmosphereModel::new(bevy_atmosphere::prelude::Gradient {
-        sky: Color::srgb_u8(8, 10, 20).into(),
-        horizon: Color::srgb_u8(5, 6, 13).into(),
-        ground: Color::srgb_u8(5, 6, 13).into(),
+        sky: Color::srgb_u8(7, 9, 18).into(),
+        horizon: Color::srgb_u8(0, 0, 0).into(),
+        ground: Color::srgb_u8(0, 0, 0).into(),
     }));
+
+    // sky: Color::srgb_u8(8, 10, 20).into(),
+    // horizon: Color::srgb_u8(5, 6, 13).into(),
+    // ground: Color::srgb_u8(5, 6, 13).into(),
     let camera = commands
         .spawn((
             PlayerCamera,
@@ -50,7 +54,7 @@ pub fn spawn_player(
                     Bloom::OLD_SCHOOL,
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
-                        color: Color::srgb_u8(5, 6, 13),
+                        color: Color::srgb_u8(2, 2, 2),
                         falloff: FogFalloff::Exponential { density: 0.2 },
                         ..default()
                     },
@@ -87,18 +91,16 @@ pub fn spawn_player(
                 (
                     SpotLight {
                         color: Color::WHITE,
-                        intensity: 1000000.0,
+                        intensity: 2000000.0,
                         shadows_enabled: true,
                         range: 10.0,
-                        radius: 0.2,
-                        outer_angle: PI / 2.0 * 0.4,
+                        radius: 0.1,
+                        outer_angle: PI / 2.0 * 0.45,
                         inner_angle: 0.,
                         ..default()
                     },
-                    Transform::from_xyz(0., 0.1, 0.1)
-                        .looking_to(Vec3::new(0., -0.05, -1.), Vec3::Z),
-                    // The light source illuminates both the world model and the view model.
-                    //RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER]),
+                    Flashlight,
+                    Transform::from_xyz(0., 0., 0.5).looking_to(Vec3::new(0., 0.1, -1.), Vec3::Z),
                 )
             ],
         ))

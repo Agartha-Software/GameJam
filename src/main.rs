@@ -5,11 +5,13 @@ pub mod player;
 pub mod settings;
 pub mod speaker;
 pub mod ui;
+pub mod world;
 
 use avian3d::{
     PhysicsPlugins,
     prelude::{Collider, CollisionLayers},
 };
+use bevy::prelude::*;
 use bevy::prelude::*;
 use bevy_aspect_ratio_mask::{AspectRatioMask, AspectRatioPlugin, Resolution};
 use bevy_atmosphere::plugin::AtmospherePlugin;
@@ -22,6 +24,7 @@ use crate::{
     settings::Settings,
     speaker::spawn_speaker,
     ui::UiPlugin,
+    world::spawn_world,
 };
 
 fn main() {
@@ -75,7 +78,7 @@ fn spawn_world_model(
     });
 
     let material = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
+        base_color: Color::linear_rgb(0.1, 0.1, 0.1),
         ..default()
     });
 
