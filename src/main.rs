@@ -94,14 +94,14 @@ fn spawn_world_model(
 }
 
 fn spawn_lights(mut commands: Commands) {
-    commands.spawn((
-        PointLight {
-            color: Color::from(tailwind::ROSE_300),
-            shadows_enabled: true,
-            ..default()
-        },
-        Transform::from_xyz(-2.0, -0.75, 4.0),
-        // The light source illuminates both the world model and the view model.
-        RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER]),
-    ));
+    // commands.spawn((
+    //     PointLight {
+    //         color: Color::from(tailwind::ROSE_300),
+    //         shadows_enabled: true,
+    //         ..default()
+    //     },
+    //     Transform::from_xyz(-2.0, -0.75, 4.0),
+    //     // The light source illuminates both the world model and the view model.
+    //     RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER]),
+    // ));
 }

@@ -1,32 +1,19 @@
+use std::f32::consts::PI;
+
+use bevy::camera::visibility::RenderLayers;
+use bevy::color::palettes::tailwind;
+use bevy::core_pipeline::tonemapping::Tonemapping;
+use bevy::light::NotShadowCaster;
+use bevy::post_process::bloom::Bloom;
 use bevy::prelude::*;
-use bevy::{
-    asset::Assets,
-    camera::{
-        Camera, Camera3d, ClearColorConfig, PerspectiveProjection, Projection,
-        visibility::{RenderLayers, Visibility},
-    },
-    color::{Color, palettes::tailwind},
-    core_pipeline::tonemapping::Tonemapping,
-    ecs::{
-        children,
-        system::{Commands, ResMut},
-    },
-    light::NotShadowCaster,
-    math::{Dir3, Vec3, primitives::Cuboid},
-    mesh::{Mesh, Mesh3d},
-    pbr::{DistanceFog, FogFalloff, MeshMaterial3d, StandardMaterial},
-    post_process::bloom::Bloom,
-    transform::components::Transform,
-    utils::default,
-};
-use bevy_atmosphere::prelude::Gradient;
-use bevy_atmosphere::{model::AtmosphereModel, plugin::AtmosphereCamera};
+use bevy_atmosphere::prelude::*;
 
 use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter};
 
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
 use crate::player::{
-    PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, WorldModelCamera,
+    DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER,
+    WorldModelCamera,
 };
 
 pub fn spawn_player(
@@ -37,7 +24,7 @@ pub fn spawn_player(
     let arm = meshes.add(Cuboid::new(0.1, 0.1, 0.5));
     let arm_material = materials.add(Color::from(tailwind::TEAL_200));
 
-    commands.insert_resource(AtmosphereModel::new(Gradient {
+    commands.insert_resource(AtmosphereModel::new(bevy_atmosphere::prelude::Gradient {
         sky: Color::srgb_u8(8, 10, 20).into(),
         horizon: Color::srgb_u8(5, 6, 13).into(),
         ground: Color::srgb_u8(5, 6, 13).into(),
@@ -46,7 +33,7 @@ pub fn spawn_player(
         .spawn((
             PlayerCamera,
             Transform::from_xyz(0.0, 0.0, 1.6), //.looking_to(Vec3::X, Vec3::Z),
-            Visibility::default(),
+            Visibility::Visible,
             children![
                 (
                     WorldModelCamera,
@@ -97,6 +84,22 @@ pub fn spawn_player(
                     // The arm is free-floating, so shadows would look weird.
                     NotShadowCaster,
                 ),
+                (
+                    SpotLight {
+                        color: Color::WHITE,
+                        intensity: 1000000.0,
+                        shadows_enabled: true,
+                        range: 10.0,
+                        radius: 0.2,
+                        outer_angle: PI / 2.0 * 0.4,
+                        inner_angle: 0.,
+                        ..default()
+                    },
+                    Transform::from_xyz(0., 0.1, 0.1)
+                        .looking_to(Vec3::new(0., -0.05, -1.), Vec3::Z),
+                    // The light source illuminates both the world model and the view model.
+                    //RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER]),
+                )
             ],
         ))
         .id();
