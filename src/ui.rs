@@ -1,6 +1,5 @@
 use bevy::{
     input::mouse::AccumulatedMouseMotion,
-    math::VectorSpace,
     prelude::*,
     window::{CursorGrabMode, CursorOptions},
 };

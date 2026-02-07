@@ -2,14 +2,17 @@ use std::f32::consts::PI;
 
 use avian3d::prelude::LinearVelocity;
 use bevy::{
-    asset::{AssetServer, Assets},
-    color::Color,
+    app::{Plugin, PostStartup, Startup, Update},
+    asset::{AssetServer, Assets, Handle},
+    camera::visibility::Visibility,
+    color::{Color, LinearRgba},
     ecs::{
         component::Component,
         query::Without,
-        system::{Commands, Query, Res, ResMut},
+        resource::Resource,
+        system::{Commands, Local, Query, Res, ResMut},
     },
-    gltf::GltfAssetLabel,
+    gltf::{Gltf, GltfAssetLabel},
     math::Vec3,
     mesh::Mesh,
     pbr::StandardMaterial,
@@ -26,6 +29,17 @@ const MONSTER_MAX_STALKING_SPEED: f32 = 40.0 / 3.6;
 
 const MONSTER_TURN_AMOUNT: f32 = 0.1;
 
+pub struct MonsterPlugin;
+
+impl Plugin for MonsterPlugin {
+    fn build(&self, app: &mut bevy::app::App) {
+        app.add_systems(Startup, load_monster_gltf);
+        // app.add_systems(Startup, spawn_monster);
+        app.add_systems(Update, spawn_monster);
+        app.add_systems(Update, monster_system);
+    }
+}
+
 #[derive(Default)]
 pub enum MonsterAgro {
     #[default]
@@ -39,6 +53,14 @@ pub struct Monster {
     agro: MonsterAgro,
     agressivity: f32,
     direction: f32,
+}
+
+#[derive(Resource)]
+pub struct MonsterAssets {
+    pub model: Handle<Gltf>,
+    // pub material_base: Handle<StandardMaterial>,
+    pub material_eyes: Handle<StandardMaterial>,
+    pub material_teeth: Handle<StandardMaterial>,
 }
 
 pub fn monster_system(
@@ -101,26 +123,67 @@ impl Monster {
     }
 }
 
-pub fn spawn_monster(
+pub fn load_monster_gltf(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     assets: Res<AssetServer>,
 ) {
-    let shark = assets.load::<Scene>(GltfAssetLabel::Scene(0).from_asset("anglershark.glb"));
+    let model = assets.load::<Gltf>("anglershark.glb");
 
-    // let shark_tx = assets.load::<Image>("anglershark.png");
+    let mut material_eyes = StandardMaterial::default();
+    material_eyes.base_color = Color::linear_rgb(50.0, 50.0, 50.0);
+    material_eyes.emissive = LinearRgba::rgb(100.0, 100.0, 100.0);
+    let material_eyes = materials.add(material_eyes);
 
-    // let mut base_mat = StandardMaterial::default();
+    let mut material_teeth = StandardMaterial::default();
+    material_teeth.base_color = Color::linear_rgb(20.0, 20.0, 20.0);
+    let material_teeth = materials.add(material_teeth);
 
-    // base_mat.base_color = Color::linear_rgb(0.9, 0.9, 0.9);
+    commands.insert_resource(MonsterAssets {
+        model,
+        material_eyes,
+        material_teeth,
+    });
+}
 
-    // base_mat.base_color_texture = Some(shark_tx);
+pub fn spawn_monster(
+    mut commands: Commands,
+    monster_assets: Res<MonsterAssets>,
+    gltf: Res<Assets<Gltf>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut loaded: Local<bool>,
+) {
+    if *loaded {
+        return;
+    }
 
-    // let base_mat = materials.add(base_mat);
+    let Some(gltf) = gltf.get(&monster_assets.model) else {
+        return;
+    };
+    *loaded = true;
+
+    let Some(eyes) = gltf.named_materials.get("eyes") else {
+        return;
+    };
+    let Some(teeth) = gltf.named_materials.get("teeth") else {
+        return;
+    };
+
+    let Some(base) = gltf.named_materials.get("base") else {
+        return;
+    };
+
+    *materials.get_mut(eyes).unwrap() = materials
+        .get(&monster_assets.material_eyes)
+        .unwrap()
+        .clone();
+    *materials.get_mut(teeth).unwrap() = materials
+        .get(&monster_assets.material_teeth)
+        .unwrap()
+        .clone();
 
     commands.spawn((
-        SceneRoot(shark),
+        SceneRoot(gltf.scenes[0].clone()),
         Monster::default(),
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::from(Vec3::new(0.0, 5.0, 1.0)),

@@ -90,7 +90,6 @@ pub fn spawn_player(
                         color: Color::WHITE,
                         intensity: 2000000.0,
                         shadows_enabled: true,
-                        range: 10.0,
                         radius: 0.1,
                         outer_angle: PI / 2.0 * 0.45,
                         inner_angle: 0.,

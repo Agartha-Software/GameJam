@@ -1,7 +1,9 @@
 pub mod debug;
+pub mod monster;
 pub mod particle;
 pub mod player;
 pub mod settings;
+pub mod speaker;
 pub mod ui;
 pub mod world;
 
@@ -16,8 +18,10 @@ use particle::ParticlePlugin;
 
 use crate::{
     debug::DebugPlugin,
+    monster::MonsterPlugin,
     player::{PLAYER_FLOOR_LAYER, PlayerPlugin},
     settings::Settings,
+    speaker::spawn_speaker,
     ui::UiPlugin,
     world::spawn_world,
 };
@@ -51,8 +55,9 @@ fn main() {
             DebugPlugin,
             UiPlugin,
             PlayerPlugin,
+            MonsterPlugin,
         ))
-        .add_systems(Startup, (spawn_world_model, spawn_world))
+        .add_systems(Startup, (spawn_world_model, spawn_world, spawn_speaker))
         .run();
 }
 
