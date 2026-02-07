@@ -1,11 +1,31 @@
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    window::{CursorGrabMode, CursorOptions},
+};
 use bevy_aspect_ratio_mask::Hud;
 
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_ui);
+        app.add_systems(Startup, (spawn_ui, init_mouse))
+            .add_systems(Update, grab_mouse);
+    }
+}
+
+fn init_mouse(mut cursor_options: Single<&mut CursorOptions>) {
+    cursor_options.grab_mode = CursorGrabMode::Locked;
+    cursor_options.visible = false;
+}
+
+fn grab_mouse(mut cursor_options: Single<&mut CursorOptions>, key: Res<ButtonInput<KeyCode>>) {
+    if key.just_pressed(KeyCode::Escape) {
+        if cursor_options.visible {
+            cursor_options.grab_mode = CursorGrabMode::Locked;
+        } else {
+            cursor_options.grab_mode = CursorGrabMode::None;
+        }
+        cursor_options.visible = !cursor_options.visible;
     }
 }
 
