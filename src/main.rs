@@ -1,3 +1,4 @@
+pub mod debug;
 pub mod particle;
 pub mod player;
 mod settings;
@@ -6,16 +7,12 @@ use avian3d::{
     PhysicsPlugins,
     prelude::{Collider, CollisionLayers},
 };
-use bevy::{
-    camera::visibility::RenderLayers,
-    color::palettes::tailwind,
-    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
-    prelude::*,
-};
+use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
 use bevy_atmosphere::plugin::AtmospherePlugin;
 use particle::ParticlePlugin;
 
 use crate::{
+    debug::DebugPlugin,
     player::{
         DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER, move_player,
         spawn_player,
@@ -31,23 +28,7 @@ fn main() {
             AtmospherePlugin,
             ParticlePlugin,
             PhysicsPlugins::default(),
-            FpsOverlayPlugin {
-                config: FpsOverlayConfig {
-                    text_config: TextFont {
-                        font_size: 20.0,
-                        font: default(),
-                        ..default()
-                    },
-                    text_color: Color::srgb(0.0, 1.0, 0.0),
-                    refresh_interval: core::time::Duration::from_millis(100),
-                    enabled: true,
-                    frame_time_graph_config: FrameTimeGraphConfig {
-                        enabled: true,
-                        min_fps: 30.0,
-                        target_fps: 144.0,
-                    },
-                },
-            },
+            DebugPlugin,
         ))
         .add_systems(
             Startup,
