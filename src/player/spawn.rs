@@ -53,7 +53,7 @@ pub fn spawn_player(
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
                         color: Color::srgb_u8(2, 2, 2),
-                        falloff: FogFalloff::Exponential { density: 0.4 },
+                        falloff: FogFalloff::Exponential { density: 0.3 },
                         ..default()
                     },
                 ),
