@@ -7,23 +7,15 @@ pub mod speaker;
 pub mod ui;
 pub mod world;
 
-use avian3d::{
-    PhysicsPlugins,
-    prelude::{Collider, CollisionLayers},
-};
+use avian3d::PhysicsPlugins;
 use bevy::prelude::*;
 use bevy_aspect_ratio_mask::{AspectRatioMask, AspectRatioPlugin, Resolution};
 use bevy_atmosphere::plugin::AtmospherePlugin;
 use particle::ParticlePlugin;
 
 use crate::{
-    debug::DebugPlugin,
-    monster::MonsterPlugin,
-    player::{PLAYER_FLOOR_LAYER, PlayerPlugin},
-    settings::Settings,
-    speaker::spawn_speaker,
-    ui::UiPlugin,
-    world::spawn_world,
+    debug::DebugPlugin, monster::MonsterPlugin, player::PlayerPlugin, settings::Settings,
+    speaker::spawn_speaker, ui::UiPlugin, world::WorldPlugin,
 };
 
 fn main() {
@@ -54,51 +46,10 @@ fn main() {
             PhysicsPlugins::default(),
             DebugPlugin,
             UiPlugin,
+            WorldPlugin,
             PlayerPlugin,
             MonsterPlugin,
         ))
-        .add_systems(Startup, (spawn_world_model, spawn_world, spawn_speaker))
+        .add_systems(Startup, spawn_speaker)
         .run();
-}
-
-fn spawn_world_model(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut ambient: ResMut<GlobalAmbientLight>,
-) {
-    *ambient = GlobalAmbientLight::NONE;
-
-    let floor = meshes.add(Plane3d::new(Vec3::Z, Vec2::splat(10.0)));
-    let cube = meshes.add(Cuboid::new(2.0, 1.0, 0.5));
-    let _material_emissive = materials.add(StandardMaterial {
-        emissive: LinearRgba::rgb(1000.0, 1000.0, 1000.0),
-        ..default()
-    });
-
-    let material = materials.add(StandardMaterial {
-        base_color: Color::linear_rgb(0.1, 0.1, 0.1),
-        ..default()
-    });
-
-    // The world model camera will render the floor and the cubes spawned in this system.
-    // Assigning no `RenderLayers` component defaults to layer 0.
-
-    commands.spawn((
-        Mesh3d(floor.clone()),
-        MeshMaterial3d(material.clone()),
-        Collider::cuboid(20.0, 20.0, 0.1),
-        CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
-    ));
-    commands.spawn((
-        Mesh3d(cube.clone()),
-        MeshMaterial3d(material),
-        Transform::from_xyz(0.0, -3.0, 0.25),
-    ));
-
-    // commands.spawn((
-    //     Mesh3d(cube),
-    //     MeshMaterial3d(material_emissive),
-    //     Transform::from_xyz(0.75, 0.0, 1.75),
-    // ));
 }

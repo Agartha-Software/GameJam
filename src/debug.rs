@@ -1,5 +1,8 @@
+use avian3d::prelude::{PhysicsDebugPlugin, PhysicsGizmos};
 use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
 use bevy::prelude::*;
+use bevy_inspector_egui::bevy_egui::EguiPlugin;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 use crate::player::WorldModelCamera;
 use crate::settings::Settings;
@@ -26,8 +29,14 @@ impl Plugin for DebugPlugin {
                 ..Default::default()
             },
         })
+        .add_plugins((EguiPlugin::default(), PhysicsDebugPlugin))
+        .add_plugins(WorldInspectorPlugin::new().run_if(if_debug_display))
         .add_systems(Update, toggle_debug);
     }
+}
+
+pub fn if_debug_display(settings: Res<Settings>) -> bool {
+    settings.debug_display
 }
 
 fn toggle_debug(
@@ -36,14 +45,18 @@ fn toggle_debug(
     mut cam: Single<(&mut DistanceFog, &mut Projection), With<WorldModelCamera>>,
     mut image_overlay: Single<&mut Visibility, With<OverlayImage>>,
     mut settings: ResMut<Settings>,
+    mut store: ResMut<GizmoConfigStore>,
 ) {
     if input.just_pressed(KeyCode::F1) {
         fps_overlay.enabled = !fps_overlay.enabled;
         fps_overlay.frame_time_graph_config.enabled = !fps_overlay.frame_time_graph_config.enabled;
     }
     if input.just_pressed(KeyCode::F2) {
-        settings.debug = !settings.debug;
-        settings.debug_display = false;
+        if settings.debug_display {
+            settings.debug_display = false;
+        } else {
+            settings.debug = !settings.debug;
+        }
     }
     if input.just_pressed(KeyCode::F3) {
         settings.debug_display = !settings.debug_display;
@@ -55,9 +68,12 @@ fn toggle_debug(
         **image_overlay = Visibility::Visible;
     }
 
+    let phys_config = store.config_mut::<PhysicsGizmos>().0;
     if settings.debug_display == true {
         cam.0.color.set_alpha(0.0);
+        phys_config.enabled = true;
     } else {
         cam.0.color.set_alpha(1.0);
+        phys_config.enabled = false;
     }
 }

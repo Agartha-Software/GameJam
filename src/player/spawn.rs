@@ -120,7 +120,7 @@ pub fn spawn_player(
             playercast,
             avian3d::dynamics::prelude::RigidBody::Kinematic,
             LinearVelocity::default(),
-            Transform::default(),
+            Transform::from_xyz(-62.0, -81.0, 22.0),
             Visibility::default(),
         ))
         .add_child(camera);
