@@ -13,7 +13,8 @@ use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter}
 use crate::player::flashlight::Flashlight;
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
 use crate::player::{
-    PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER, WorldModelCamera,
+    DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER,
+    WorldModelCamera,
 };
 
 pub fn spawn_player(
@@ -22,20 +23,7 @@ pub fn spawn_player(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let arm = meshes.add(Cuboid::new(0.1, 0.1, 0.5));
-    let arm_material = materials.add(Color::from(tailwind::TEAL_200));
-
-    commands.insert_resource(AtmosphereModel::new(bevy_atmosphere::prelude::Gradient {
-        sky: Color::srgb_u8(7, 9, 18).into(),
-        horizon: Color::srgb_u8(3, 3, 3).into(),
-        ground: Color::srgb_u8(5, 5, 5).into(),
-        height: 0.7,
-    }));
-
-    commands.insert_resource(AtmosphereSettings {
-        dithering: false,
-        resolution: 1024,
-        ..Default::default()
-    });
+    let arm_material = materials.add(Color::from(tailwind::ORANGE_950));
 
     let camera = commands
         .spawn((
@@ -57,7 +45,7 @@ pub fn spawn_player(
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
                         color: Color::srgb_u8(3, 3, 3),
-                        falloff: FogFalloff::Exponential { density: 0.3 },
+                        falloff: FogFalloff::Exponential { density: 0.20 },
                         ..default()
                     },
                 ),
@@ -92,15 +80,17 @@ pub fn spawn_player(
                 (
                     SpotLight {
                         color: Color::WHITE,
-                        intensity: 2000000.0,
+                        intensity: 3000000.0,
+                        range: 30.0,
                         shadows_enabled: true,
                         radius: 0.1,
-                        outer_angle: PI / 2.0 * 0.45,
+                        outer_angle: PI / 2.0 * 0.35,
                         inner_angle: 0.,
                         ..default()
                     },
                     Flashlight,
-                    Transform::from_xyz(0., 0., 0.5).looking_to(Vec3::new(0., 0.1, -1.), Vec3::Z),
+                    RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER]),
+                    Transform::from_xyz(0., 0., 0.5).looking_to(Vec3::new(0., 0.05, -1.), Vec3::Z),
                 )
             ],
         ))

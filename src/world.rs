@@ -1,5 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use bevy_atmosphere::prelude::*;
 
 use crate::player::PLAYER_FLOOR_LAYER;
 
@@ -7,9 +8,30 @@ pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_ground_gltf)
+        app.add_systems(Startup, (load_ground_gltf, setup_world))
             .add_systems(Update, spawn_ground);
     }
+}
+
+pub fn setup_world(mut ambient: ResMut<GlobalAmbientLight>, mut commands: Commands) {
+    commands.insert_resource(AtmosphereModel::new(bevy_atmosphere::prelude::Gradient {
+        sky: Color::srgb_u8(7, 9, 18).into(),
+        horizon: Color::srgb_u8(3, 3, 3).into(),
+        ground: Color::srgb_u8(5, 5, 5).into(),
+        height: 0.7,
+    }));
+
+    commands.insert_resource(AtmosphereSettings {
+        dithering: false,
+        resolution: 1024,
+        ..Default::default()
+    });
+
+    *ambient = GlobalAmbientLight {
+        color: Color::srgb_u8(7, 8, 18).into(),
+        brightness: 20000.0,
+        affects_lightmapped_meshes: true,
+    };
 }
 
 #[derive(Component)]
