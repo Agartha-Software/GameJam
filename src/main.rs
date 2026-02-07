@@ -8,14 +8,14 @@ use avian3d::{
     PhysicsPlugins,
     prelude::{Collider, CollisionLayers},
 };
-use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
+use bevy::prelude::*;
 use bevy_aspect_ratio_mask::{AspectRatioMask, AspectRatioPlugin, Resolution};
 use bevy_atmosphere::plugin::AtmospherePlugin;
 use particle::ParticlePlugin;
 
 use crate::{
     debug::DebugPlugin,
-    player::{DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, PlayerPlugin, VIEW_MODEL_RENDER_LAYER},
+    player::{PLAYER_FLOOR_LAYER, PlayerPlugin},
     settings::Settings,
     ui::UiPlugin,
 };

@@ -25,10 +25,14 @@ pub fn spawn_player(
     let arm_material = materials.add(Color::from(tailwind::TEAL_200));
 
     commands.insert_resource(AtmosphereModel::new(bevy_atmosphere::prelude::Gradient {
-        sky: Color::srgb_u8(8, 10, 20).into(),
-        horizon: Color::srgb_u8(5, 6, 13).into(),
-        ground: Color::srgb_u8(5, 6, 13).into(),
+        sky: Color::srgb_u8(7, 9, 18).into(),
+        horizon: Color::srgb_u8(0, 0, 0).into(),
+        ground: Color::srgb_u8(0, 0, 0).into(),
     }));
+
+    // sky: Color::srgb_u8(8, 10, 20).into(),
+    // horizon: Color::srgb_u8(5, 6, 13).into(),
+    // ground: Color::srgb_u8(5, 6, 13).into(),
     let camera = commands
         .spawn((
             PlayerCamera,
@@ -50,7 +54,7 @@ pub fn spawn_player(
                     Bloom::OLD_SCHOOL,
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
-                        color: Color::srgb_u8(5, 6, 13),
+                        color: Color::srgb_u8(2, 2, 2),
                         falloff: FogFalloff::Exponential { density: 0.6 },
                         ..default()
                     },
