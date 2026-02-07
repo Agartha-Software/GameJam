@@ -7,18 +7,18 @@ use crate::{
 };
 
 /// Acceleration in m/s^2
-pub const PLAYER_ACCELERATION: f32 = 40.0 / 3.6;
+pub const PLAYER_ACCELERATION: f32 = 120.0 / 3.6;
 
 /// Velocity in m/s calculated from km/h
-pub const PLAYER_MAX_SPEED: f32 = 4.0 / 3.6;
+pub const PLAYER_MAX_SPEED: f32 = 3.0 / 3.6;
 /// Velocity squared to optimize comparaisons
 pub const PLAYER_MAX_SPEED_2: f32 = PLAYER_MAX_SPEED * PLAYER_MAX_SPEED;
 
 // Effective gravity in m/s^2 in Z
-pub const PLAYER_BUOYANCY: f32 = -5.;
+pub const PLAYER_BUOYANCY: f32 = -10.;
 
 // Jump velocity
-pub const PLAYER_JUMP_IMPULSE: f32 = 0.5;
+pub const PLAYER_JUMP_IMPULSE: f32 = 0.4;
 
 pub const FLOOR_RAY_PRE_LEN: f32 = 1.0;
 
