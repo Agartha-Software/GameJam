@@ -33,7 +33,7 @@ impl Plugin for DebugPlugin {
 fn toggle_debug(
     input: Res<ButtonInput<KeyCode>>,
     mut fps_overlay: ResMut<FpsOverlayConfig>,
-    mut fog: Single<&mut DistanceFog, With<WorldModelCamera>>,
+    mut cam: Single<(&mut DistanceFog, &mut Projection), With<WorldModelCamera>>,
     mut image_overlay: Single<&mut Visibility, With<OverlayImage>>,
     mut settings: ResMut<Settings>,
 ) {
@@ -43,12 +43,21 @@ fn toggle_debug(
     }
     if input.just_pressed(KeyCode::F2) {
         settings.debug = !settings.debug;
-        if settings.debug == true {
-            //fog.color.set_alpha(0.0);
-            **image_overlay = Visibility::Hidden;
-        } else {
-            fog.color.set_alpha(1.0);
-            **image_overlay = Visibility::Visible;
-        }
+        settings.debug_display = false;
+    }
+    if input.just_pressed(KeyCode::F3) {
+        settings.debug_display = !settings.debug_display;
+        settings.debug = settings.debug_display;
+    }
+    if settings.debug == true {
+        **image_overlay = Visibility::Hidden;
+    } else {
+        **image_overlay = Visibility::Visible;
+    }
+
+    if settings.debug_display == true {
+        cam.0.color.set_alpha(0.0);
+    } else {
+        cam.0.color.set_alpha(1.0);
     }
 }

@@ -5,6 +5,7 @@ pub struct Settings {
     pub camera_sensitivity: f32,
     pub inputs: Inputs,
     pub debug: bool,
+    pub debug_display: bool,
     pub chromatic_aberation: f32,
 }
 
@@ -36,6 +37,7 @@ impl Default for Settings {
             camera_sensitivity: 1.0,
             inputs: Default::default(),
             debug: false,
+            debug_display: false,
             chromatic_aberation: 1.2,
         }
     }

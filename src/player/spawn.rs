@@ -46,14 +46,13 @@ pub fn spawn_player(
                     Camera::default(),
                     Projection::from(PerspectiveProjection {
                         fov: 80.0_f32.to_radians(),
-                        far: 60.0,
+                        far: 2000.0,
                         ..default()
                     }),
                     Bloom::OLD_SCHOOL,
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
                         color: Color::srgb_u8(2, 2, 2),
-                        directional_light_color: Color::srgb_u8(255, 9, 18),
                         falloff: FogFalloff::Exponential { density: 0.4 },
                         ..default()
                     },

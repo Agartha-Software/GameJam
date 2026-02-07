@@ -1,5 +1,5 @@
 use avian3d::{math::PI, prelude::*};
-use bevy::{input::mouse::AccumulatedMouseMotion, math::VectorSpace, prelude::*};
+use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
 
 use crate::{
     player::{Player, PlayerCamera},
