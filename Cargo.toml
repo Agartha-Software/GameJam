@@ -2,5 +2,24 @@
 name = "GameJam"
 version = "0.1.0"
 edition = "2024"
+authors = ["Arthur Aillet", "Julian Scott"]
+
+# Enable a small amount of optimization in the dev profile.
+[profile.dev]
+opt-level = 1
+debug = "line-tables-only"
+
+# Enable a large amount of optimization in the dev profile for dependencies.
+[profile.dev.package."*"]
+opt-level = 3
+debug = false
+
+[profile.debugging]
+inherits = "dev"
+debug = true
 
 [dependencies]
+bevy = { version = "0.18.0", features = ["dynamic_linking", "3d"] }
+bevy_atmosphere = { git = "https://github.com/Arthur-Aillet/bevy_atmosphere", branch = "feat/z-up" }
+avian3d = "0.5"
+bevy_hanabi = "0.18"
