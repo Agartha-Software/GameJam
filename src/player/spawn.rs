@@ -26,8 +26,9 @@ pub fn spawn_player(
 
     commands.insert_resource(AtmosphereModel::new(bevy_atmosphere::prelude::Gradient {
         sky: Color::srgb_u8(7, 9, 18).into(),
-        horizon: Color::srgb_u8(0, 0, 0).into(),
-        ground: Color::srgb_u8(0, 0, 0).into(),
+        horizon: Color::srgb_u8(2, 2, 2).into(),
+        ground: Color::srgb_u8(2, 2, 2).into(),
+        height: 0.5,
     }));
 
     // sky: Color::srgb_u8(8, 10, 20).into(),
