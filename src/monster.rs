@@ -2,18 +2,11 @@ use std::f32::consts::PI;
 
 use avian3d::prelude::LinearVelocity;
 use bevy::{
-    asset::Assets,
-    color::Color,
-    ecs::{
+    asset::{AssetServer, Assets}, color::Color, ecs::{
         component::Component,
         query::Without,
         system::{Commands, Query, Res, ResMut},
-    },
-    math::{Vec3, primitives},
-    mesh::{Mesh, Mesh3d},
-    pbr::{MeshMaterial3d, StandardMaterial},
-    time::Time,
-    transform::components::Transform,
+    }, gltf::GltfAssetLabel, math::Vec3, mesh::Mesh, pbr::StandardMaterial, scene::{Scene, SceneRoot}, time::Time, transform::components::Transform
 };
 
 use crate::speaker::Speaker;
@@ -92,6 +85,7 @@ impl Monster {
         velocity.0 = velocity
             .0
             .rotate_axis(Vec3::Z, self.direction * MONSTER_TURN_AMOUNT * time.delta_secs());
+        transform.rotation = Transform::default().looking_to(-velocity.0, Vec3::Z).rotation;
     }
 }
 
@@ -99,17 +93,26 @@ pub fn spawn_monster(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    assets: Res<AssetServer>,
 ) {
-    let sphere = meshes.add(primitives::Sphere::new(1.0));
+    let shark = assets.load::<Scene>(GltfAssetLabel::Scene(0).from_asset("anglershark.glb"));
 
-    let mat = materials.add(StandardMaterial::from_color(Color::srgb(0.1, 0.11, 0.12)));
+    // let shark_tx = assets.load::<Image>("anglershark.png");
+
+    // let mut base_mat = StandardMaterial::default();
+
+    // base_mat.base_color = Color::linear_rgb(0.9, 0.9, 0.9);
+
+    // base_mat.base_color_texture = Some(shark_tx);
+
+    // let base_mat = materials.add(base_mat);
 
     commands.spawn((
-        Mesh3d(sphere),
-        MeshMaterial3d(mat),
+        SceneRoot(shark),
         Monster::default(),
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::from(Vec3::new(0.0, 5.0, 1.0)),
         Transform::from_xyz(20.0, 3.0, 5.0),
+        Visibility::default(),
     ));
 }
