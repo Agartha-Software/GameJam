@@ -47,15 +47,16 @@
 // }
 pub mod player;
 mod settings;
+mod monster;
+mod speaker;
 
 use avian3d::{PhysicsPlugins, prelude::{Collider, CollisionLayers}};
 use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
 
 use crate::{
-    player::{
-        DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, PlayerFloorCast, VIEW_MODEL_RENDER_LAYER, move_player, spawn_player
-    },
-    settings::Settings,
+    monster::{monster_system, spawn_monster}, player::{
+        DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER, move_player, spawn_player
+    }, settings::Settings, speaker::spawn_speaker
 };
 
 fn main() {
@@ -64,9 +65,10 @@ fn main() {
         .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
         .add_systems(
             Startup,
-            (spawn_player, spawn_world_model, spawn_lights, spawn_text),
+            (spawn_player, spawn_world_model, spawn_lights, spawn_text, spawn_speaker, spawn_monster),
         )
         .add_systems(Update, move_player)
+        .add_systems(Update, monster_system)
         .run();
 }
 

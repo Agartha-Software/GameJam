@@ -10,7 +10,7 @@ use bevy::{
     ecs::{
         children,
         component::Component,
-        query::{QueryFilter, With, Without},
+        query::{With, Without},
         system::{Commands, Res, ResMut, Single},
     },
     input::{ButtonInput, keyboard::KeyCode, mouse::AccumulatedMouseMotion},
@@ -18,7 +18,6 @@ use bevy::{
     math::{Dir3, EulerRot, Quat, Vec2, Vec3, Vec3Swizzles, primitives::Cuboid},
     mesh::{Mesh, Mesh3d},
     pbr::{MeshMaterial3d, StandardMaterial},
-    reflect::Reflect,
     time::Time,
     transform::components::Transform,
     utils::default,
@@ -35,9 +34,6 @@ pub struct Player {
 
 #[derive(Debug, Component)]
 pub struct PlayerCamera;
-
-#[derive(Reflect)]
-pub struct PlayerFloorCast;
 
 #[derive(Debug, Component)]
 struct WorldModelCamera;
