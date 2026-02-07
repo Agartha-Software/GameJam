@@ -45,27 +45,49 @@
 //                 Transform::from_xyz(0.0, 0.0, 0.0),
 //             ));
 // }
+mod monster;
+pub mod particle;
 pub mod player;
 mod settings;
-mod monster;
 mod speaker;
 
-use avian3d::{PhysicsPlugins, prelude::{Collider, CollisionLayers}};
+use avian3d::{
+    PhysicsPlugins,
+    prelude::{Collider, CollisionLayers},
+};
 use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
+use bevy_atmosphere::plugin::AtmospherePlugin;
+use particle::ParticlePlugin;
 
 use crate::{
-    monster::{monster_system, spawn_monster}, player::{
-        DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER, move_player, spawn_player
-    }, settings::Settings, speaker::spawn_speaker
+    monster::{monster_system, spawn_monster},
+    player::{
+        DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER, move_player,
+        spawn_player,
+    },
+    settings::Settings,
+    speaker::spawn_speaker,
 };
 
 fn main() {
     App::new()
         .init_resource::<Settings>()
-        .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
+        .add_plugins((
+            DefaultPlugins,
+            AtmospherePlugin,
+            ParticlePlugin,
+            PhysicsPlugins::default(),
+        ))
         .add_systems(
             Startup,
-            (spawn_player, spawn_world_model, spawn_lights, spawn_text, spawn_speaker, spawn_monster),
+            (
+                spawn_player,
+                spawn_world_model,
+                spawn_lights,
+                spawn_text,
+                spawn_speaker,
+                spawn_monster,
+            ),
         )
         .add_systems(Update, move_player)
         .add_systems(Update, monster_system)
@@ -79,7 +101,15 @@ fn spawn_world_model(
 ) {
     let floor = meshes.add(Plane3d::new(Vec3::Z, Vec2::splat(10.0)));
     let cube = meshes.add(Cuboid::new(2.0, 1.0, 0.5));
-    let material = materials.add(Color::WHITE);
+    let material_emissive = materials.add(StandardMaterial {
+        emissive: LinearRgba::rgb(1000.0, 1000.0, 1000.0),
+        ..default()
+    });
+
+    let material = materials.add(StandardMaterial {
+        base_color: Color::WHITE,
+        ..default()
+    });
 
     // The world model camera will render the floor and the cubes spawned in this system.
     // Assigning no `RenderLayers` component defaults to layer 0.
@@ -91,24 +121,16 @@ fn spawn_world_model(
         CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
     ));
     commands.spawn((
-        Transform::from_xyz(0.0, 0.0, -1.0).with_scale((10.0, 10.0, 1.0).into()),
-        Mesh3d(floor),
-        MeshMaterial3d(material.clone()),
-        Collider::cuboid(20.0, 20.0, 0.1),
-        CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
-    ));
-
-    commands.spawn((
         Mesh3d(cube.clone()),
-        MeshMaterial3d(material.clone()),
+        MeshMaterial3d(material),
         Transform::from_xyz(0.0, -3.0, 0.25),
     ));
 
-    commands.spawn((
-        Mesh3d(cube),
-        MeshMaterial3d(material),
-        Transform::from_xyz(0.75, 0.0, 1.75),
-    ));
+    // commands.spawn((
+    //     Mesh3d(cube),
+    //     MeshMaterial3d(material_emissive),
+    //     Transform::from_xyz(0.75, 0.0, 1.75),
+    // ));
 }
 
 fn spawn_lights(mut commands: Commands) {
