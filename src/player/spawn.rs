@@ -31,6 +31,11 @@ pub fn spawn_player(
         height: 0.5,
     }));
 
+    commands.insert_resource(AtmosphereSettings {
+        dithering: false,
+        resolution: 1024,
+        ..Default::default()
+    });
     // sky: Color::srgb_u8(8, 10, 20).into(),
     // horizon: Color::srgb_u8(5, 6, 13).into(),
     // ground: Color::srgb_u8(5, 6, 13).into(),
