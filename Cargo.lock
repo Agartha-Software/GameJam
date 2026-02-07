@@ -569,7 +569,7 @@ dependencies = [
 [[package]]
 name = "bevy_atmosphere"
 version = "0.13.0"
-source = "git+https://github.com/Arthur-Aillet/bevy_atmosphere?branch=feat%2Fz-up#61851da9eb87b4cb6748dc7acb4a22a76873df1e"
+source = "git+https://github.com/Arthur-Aillet/bevy_atmosphere?branch=feat%2Fz-up#3fb8682a2523c2a8eb66a7fa481b1d46e600e407"
 dependencies = [
  "bevy",
  "bevy_atmosphere_macros",
@@ -580,7 +580,7 @@ dependencies = [
 [[package]]
 name = "bevy_atmosphere_macros"
 version = "0.8.0"
-source = "git+https://github.com/Arthur-Aillet/bevy_atmosphere?branch=feat%2Fz-up#61851da9eb87b4cb6748dc7acb4a22a76873df1e"
+source = "git+https://github.com/Arthur-Aillet/bevy_atmosphere?branch=feat%2Fz-up#3fb8682a2523c2a8eb66a7fa481b1d46e600e407"
 dependencies = [
  "bevy_macro_utils 0.16.1",
  "proc-macro-crate",

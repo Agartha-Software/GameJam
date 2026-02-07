@@ -26,9 +26,9 @@ pub fn spawn_player(
 
     commands.insert_resource(AtmosphereModel::new(bevy_atmosphere::prelude::Gradient {
         sky: Color::srgb_u8(7, 9, 18).into(),
-        horizon: Color::srgb_u8(2, 2, 2).into(),
-        ground: Color::srgb_u8(2, 2, 2).into(),
-        height: 0.5,
+        horizon: Color::srgb_u8(3, 3, 3).into(),
+        ground: Color::srgb_u8(5, 5, 5).into(),
+        height: 0.7,
     }));
 
     commands.insert_resource(AtmosphereSettings {
@@ -58,7 +58,7 @@ pub fn spawn_player(
                     Bloom::OLD_SCHOOL,
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
-                        color: Color::srgb_u8(2, 2, 2),
+                        color: Color::srgb_u8(3, 3, 3),
                         falloff: FogFalloff::Exponential { density: 0.3 },
                         ..default()
                     },
