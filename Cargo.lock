@@ -9,6 +9,7 @@ dependencies = [
  "avian3d",
  "bevy",
  "rand",
+ "bevy_aspect_ratio_mask",
  "bevy_atmosphere",
  "bevy_hanabi",
 ]
@@ -500,6 +501,15 @@ dependencies = [
  "variadics_please",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "bevy_aspect_ratio_mask"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6c4b7e7f2409e4f22a443b450806809cd95a1669487b3b6c875553addde5d1a"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]

@@ -19,8 +19,13 @@ inherits = "dev"
 debug = true
 
 [dependencies]
-bevy = { version = "0.18.0", features = ["dynamic_linking", "3d"] }
+bevy = { version = "0.18.0", features = [
+    "dynamic_linking",
+    "3d",
+    "bevy_dev_tools",
+] }
 bevy_atmosphere = { git = "https://github.com/Arthur-Aillet/bevy_atmosphere", branch = "feat/z-up" }
 avian3d = "0.5"
 rand = "0.9.2"
 bevy_hanabi = "0.18"
+bevy_aspect_ratio_mask = "0.4.0"
