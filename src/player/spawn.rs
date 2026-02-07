@@ -43,19 +43,18 @@ pub fn spawn_player(
                     WorldModelCamera,
                     Camera3d::default(),
                     AtmosphereCamera::default(),
-                    Camera {
-                        clear_color: ClearColorConfig::Custom(Color::srgb_u8(0, 0, 0)),
-                        ..default()
-                    },
+                    Camera::default(),
                     Projection::from(PerspectiveProjection {
                         fov: 80.0_f32.to_radians(),
+                        far: 60.0,
                         ..default()
                     }),
                     Bloom::OLD_SCHOOL,
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
                         color: Color::srgb_u8(2, 2, 2),
-                        falloff: FogFalloff::Exponential { density: 0.6 },
+                        directional_light_color: Color::srgb_u8(255, 9, 18),
+                        falloff: FogFalloff::Exponential { density: 0.4 },
                         ..default()
                     },
                 ),
@@ -63,7 +62,6 @@ pub fn spawn_player(
                 (
                     Camera3d::default(),
                     Camera {
-                        clear_color: ClearColorConfig::Custom(Color::srgb_u8(0, 0, 0)),
                         // Bump the order to render on top of the world model.
                         order: 1,
                         ..default()

@@ -60,7 +60,10 @@ fn spawn_world_model(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut ambient: ResMut<GlobalAmbientLight>,
 ) {
+    *ambient = GlobalAmbientLight::NONE;
+
     let floor = meshes.add(Plane3d::new(Vec3::Z, Vec2::splat(10.0)));
     let cube = meshes.add(Cuboid::new(2.0, 1.0, 0.5));
     let _material_emissive = materials.add(StandardMaterial {

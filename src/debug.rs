@@ -44,7 +44,7 @@ fn toggle_debug(
     if input.just_pressed(KeyCode::F2) {
         settings.debug = !settings.debug;
         if settings.debug == true {
-            fog.color.set_alpha(0.0);
+            //fog.color.set_alpha(0.0);
             **image_overlay = Visibility::Hidden;
         } else {
             fog.color.set_alpha(1.0);
