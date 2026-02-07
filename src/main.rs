@@ -1,22 +1,26 @@
 pub mod debug;
+pub mod monster;
 pub mod particle;
 pub mod player;
 pub mod settings;
+pub mod speaker;
 pub mod ui;
 
 use avian3d::{
     PhysicsPlugins,
     prelude::{Collider, CollisionLayers},
 };
-use bevy::{camera::visibility::RenderLayers, color::palettes::tailwind, prelude::*};
+use bevy::prelude::*;
 use bevy_aspect_ratio_mask::{AspectRatioMask, AspectRatioPlugin, Resolution};
 use bevy_atmosphere::plugin::AtmospherePlugin;
 use particle::ParticlePlugin;
 
 use crate::{
     debug::DebugPlugin,
-    player::{DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, PlayerPlugin, VIEW_MODEL_RENDER_LAYER},
+    monster::MonsterPlugin,
+    player::{PLAYER_FLOOR_LAYER, PlayerPlugin},
     settings::Settings,
+    speaker::spawn_speaker,
     ui::UiPlugin,
 };
 
@@ -49,8 +53,9 @@ fn main() {
             DebugPlugin,
             UiPlugin,
             PlayerPlugin,
+            MonsterPlugin,
         ))
-        .add_systems(Startup, (spawn_world_model, spawn_lights))
+        .add_systems(Startup, (spawn_world_model, spawn_speaker))
         .run();
 }
 
@@ -93,18 +98,5 @@ fn spawn_world_model(
     //     Mesh3d(cube),
     //     MeshMaterial3d(material_emissive),
     //     Transform::from_xyz(0.75, 0.0, 1.75),
-    // ));
-}
-
-fn spawn_lights(mut commands: Commands) {
-    // commands.spawn((
-    //     PointLight {
-    //         color: Color::from(tailwind::ROSE_300),
-    //         shadows_enabled: true,
-    //         ..default()
-    //     },
-    //     Transform::from_xyz(-2.0, -0.75, 4.0),
-    //     // The light source illuminates both the world model and the view model.
-    //     RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER, VIEW_MODEL_RENDER_LAYER]),
     // ));
 }

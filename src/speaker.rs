@@ -52,6 +52,6 @@ pub fn spawn_speaker(
         Speaker::default(),
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::default(),
-        Transform::from_xyz(3.0,1.0, 0.5),
+        Transform::from_xyz(3.0, 1.0, 0.5),
     ));
 }

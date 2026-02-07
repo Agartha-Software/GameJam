@@ -8,10 +8,10 @@ version = "0.1.0"
 dependencies = [
  "avian3d",
  "bevy",
- "rand",
  "bevy_aspect_ratio_mask",
  "bevy_atmosphere",
  "bevy_hanabi",
+ "rand",
 ]
 
 [[package]]
