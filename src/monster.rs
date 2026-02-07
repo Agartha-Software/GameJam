@@ -2,11 +2,20 @@ use std::f32::consts::PI;
 
 use avian3d::prelude::LinearVelocity;
 use bevy::{
-    asset::{AssetServer, Assets}, color::Color, ecs::{
+    asset::{AssetServer, Assets},
+    color::Color,
+    ecs::{
         component::Component,
         query::Without,
         system::{Commands, Query, Res, ResMut},
-    }, gltf::GltfAssetLabel, math::Vec3, mesh::Mesh, pbr::StandardMaterial, scene::{Scene, SceneRoot}, time::Time, transform::components::Transform
+    },
+    gltf::GltfAssetLabel,
+    math::Vec3,
+    mesh::Mesh,
+    pbr::StandardMaterial,
+    scene::{Scene, SceneRoot},
+    time::Time,
+    transform::components::Transform,
 };
 
 use crate::speaker::Speaker;
@@ -82,10 +91,13 @@ impl Monster {
             MonsterAgro::Bored => todo!(),
         }
 
-        velocity.0 = velocity
-            .0
-            .rotate_axis(Vec3::Z, self.direction * MONSTER_TURN_AMOUNT * time.delta_secs());
-        transform.rotation = Transform::default().looking_to(-velocity.0, Vec3::Z).rotation;
+        velocity.0 = velocity.0.rotate_axis(
+            Vec3::Z,
+            self.direction * MONSTER_TURN_AMOUNT * time.delta_secs(),
+        );
+        transform.rotation = Transform::default()
+            .looking_to(-velocity.0, Vec3::Z)
+            .rotation;
     }
 }
 

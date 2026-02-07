@@ -3,6 +3,7 @@ pub mod particle;
 pub mod player;
 pub mod settings;
 pub mod ui;
+pub mod world;
 
 use avian3d::{
     PhysicsPlugins,
@@ -18,6 +19,7 @@ use crate::{
     player::{PLAYER_FLOOR_LAYER, PlayerPlugin},
     settings::Settings,
     ui::UiPlugin,
+    world::spawn_world,
 };
 
 fn main() {
@@ -50,7 +52,7 @@ fn main() {
             UiPlugin,
             PlayerPlugin,
         ))
-        .add_systems(Startup, spawn_world_model)
+        .add_systems(Startup, (spawn_world_model, spawn_world))
         .run();
 }
 

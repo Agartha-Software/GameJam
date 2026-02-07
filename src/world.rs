@@ -1,9 +1,10 @@
-use bevy::{asset::AssetServer, ecs::system::{Commands, ResMut}, mesh::Mesh};
+use bevy::prelude::*;
 
-// pub fn generate_world(asset_server: ResMut<AssetServer>, mut commands: Commands) {
-//     let world_mesh = Mesh::new();
+pub fn spawn_world(mut commands: Commands, assets: Res<AssetServer>) {
+    let ground = assets.load::<Scene>(GltfAssetLabel::Scene(0).from_asset("terrain.glb"));
 
-//     let world_material = PbrMaterial::new();
-
-//     commands.spawn().asset_bundle(PbrBundle)
-// }
+    commands.spawn((
+        SceneRoot(ground),
+        //avian3d::dynamics::prelude::RigidBody::Static,
+    ));
+}
