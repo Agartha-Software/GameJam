@@ -2,10 +2,7 @@ use std::ops::{Add, Sub};
 
 use bevy::prelude::*;
 
-use crate::{
-    player::{Player, PlayerCamera, WorldModelCamera},
-    ui::Cursor,
-};
+use crate::{player::PlayerCamera, ui::Cursor};
 
 pub struct MarkerPlugin;
 

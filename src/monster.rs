@@ -63,7 +63,6 @@ pub struct Monster {
 #[derive(Resource)]
 pub struct MonsterAssets {
     pub model: Handle<Gltf>,
-    // pub material_base: Handle<StandardMaterial>,
     pub material_eyes: Handle<StandardMaterial>,
     pub material_teeth: Handle<StandardMaterial>,
 }
@@ -181,10 +180,6 @@ pub fn spawn_monster(
         return;
     };
     let Some(teeth) = gltf.named_materials.get("teeth") else {
-        return;
-    };
-
-    let Some(base) = gltf.named_materials.get("base") else {
         return;
     };
 

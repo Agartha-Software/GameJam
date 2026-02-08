@@ -124,12 +124,6 @@ const EMIT_GREEN: LinearRgba = LinearRgba {
     alpha: 1.0,
 };
 
-const EMIT_BLUE: LinearRgba = LinearRgba {
-    red: 0.01,
-    green: 0.03,
-    blue: 4.0,
-    alpha: 1.0,
-};
 const NODE_SPEAKER_ACTIVATION_DIST: f32 = 5.0;
 /// squared distance for easy compute
 const NODE_SPEAKER_ACTIVATION_DIST_2: f32 =
