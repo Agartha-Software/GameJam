@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
 use bevy_sprite3d::prelude::*;
 
-use crate::player::PLAYER_FLOOR_LAYER;
+use crate::{node::spawn_world_nodes, player::PLAYER_FLOOR_LAYER};
 
 pub struct WorldPlugin;
 
@@ -19,6 +19,7 @@ impl Plugin for WorldPlugin {
                     load_ladder,
                     setup_world,
                     play_background_audio,
+                    spawn_world_nodes,
                 ),
             )
             .add_systems(Update, (spawn_ground, spawn_world))

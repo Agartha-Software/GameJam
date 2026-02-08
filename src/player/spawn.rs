@@ -90,7 +90,8 @@ pub fn spawn_player(
                     },
                     Flashlight,
                     RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER]),
-                    Transform::from_xyz(0., 0., 0.5).looking_to(Vec3::new(0., 0.05, -1.), Vec3::Z),
+                    Transform::from_xyz(-0.2, 0.2, 0.5)
+                        .looking_to(Vec3::new(0., -0.05, -1.), Vec3::Z),
                 )
             ],
         ))
@@ -106,7 +107,10 @@ pub fn spawn_player(
 
     commands
         .spawn((
-            Player { movespeed: 2.5 },
+            Player {
+                movespeed: 2.5,
+                ..default()
+            },
             playercast,
             avian3d::dynamics::prelude::RigidBody::Kinematic,
             LinearVelocity::default(),
