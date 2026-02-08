@@ -5,10 +5,7 @@ use bevy::{light::NotShadowCaster, prelude::*};
 use bevy_atmosphere::prelude::*;
 use bevy_sprite3d::prelude::*;
 
-use crate::{
-    node::{OilAsset, load_oil, spawn_world_nodes},
-    player::PLAYER_FLOOR_LAYER,
-};
+use crate::node::{OilAsset, load_oil, spawn_world_nodes};
 
 pub struct WorldPlugin;
 
@@ -201,7 +198,8 @@ fn spawn_ground(
                 commands.entity(e).insert((
                     ColliderConstructor::TrimeshFromMesh,
                     NotShadowCaster,
-                    CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
+                    RigidBody::Static,
+                    CollisionMargin(1.),
                 ));
             }
         }

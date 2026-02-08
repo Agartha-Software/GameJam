@@ -1,5 +1,6 @@
 use std::ops::{Add, Sub};
 
+use avian3d::prelude::{RigidBody, RigidBodyDisabled};
 use bevy::prelude::*;
 
 use crate::{

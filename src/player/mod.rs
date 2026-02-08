@@ -36,8 +36,6 @@ pub struct PlayerFloorCast;
 #[derive(Debug, Component)]
 pub struct WorldModelCamera;
 
-pub const PLAYER_FLOOR_LAYER: u32 = 2;
-
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {

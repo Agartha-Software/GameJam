@@ -1,4 +1,4 @@
-use avian3d::prelude::LinearVelocity;
+use avian3d::prelude::*;
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 
@@ -109,9 +109,9 @@ fn spawn_speaker(
         SceneRoot(gltf.scenes[0].clone()),
         Pickup,
         Speaker::default(),
-        avian3d::dynamics::prelude::RigidBody::Kinematic,
-        LinearVelocity::default(),
-        Transform::from_xyz(-64.0, -81.0, 22.25),
+        Collider::cuboid(0.9, 0.75, 1.5),
+        RigidBody::Dynamic,
+        Transform::from_xyz(-64.0, -81.0, 22.5),
     ));
 }
 
@@ -202,6 +202,10 @@ pub fn ungrab(
     *tm = player_tm.compute_transform();
     // commands.entity(entity).remove::<ChildOf>();
     commands.entity(player).detach_child(entity);
+    commands
+        .entity(entity)
+        .remove::<RigidBodyDisabled>()
+        .remove::<GravityScale>();
 }
 
 pub fn grab(commands: &mut Commands, entity: Entity, tm: &mut Transform, player: Entity) {
@@ -212,4 +216,8 @@ pub fn grab(commands: &mut Commands, entity: Entity, tm: &mut Transform, player:
         0.0,
     ));
     commands.entity(player).add_child(entity);
+    commands
+        .entity(entity)
+        .insert(RigidBodyDisabled)
+        .insert(GravityScale(0.));
 }

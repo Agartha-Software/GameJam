@@ -9,7 +9,7 @@ mod speaker;
 mod ui;
 mod world;
 
-use avian3d::PhysicsPlugins;
+use avian3d::{PhysicsPlugins, prelude::Gravity};
 use bevy::prelude::*;
 use bevy_aspect_ratio_mask::{AspectRatioMask, AspectRatioPlugin, Resolution};
 use bevy_atmosphere::plugin::AtmospherePlugin;
@@ -54,5 +54,6 @@ fn main() {
             MarkerPlugin,
             SpeakerPlugin,
         ))
+        .insert_resource(Gravity(Vec3::NEG_Z * 0.3))
         .run();
 }

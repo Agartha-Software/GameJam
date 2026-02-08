@@ -13,7 +13,7 @@ use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter}
 
 use crate::player::flashlight::Flashlight;
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
-use crate::player::{PLAYER_FLOOR_LAYER, Player, PlayerCamera, WorldModelCamera};
+use crate::player::{Player, PlayerCamera, WorldModelCamera};
 
 pub fn spawn_player(mut commands: Commands) {
     let camera = commands
@@ -76,7 +76,7 @@ pub fn spawn_player(mut commands: Commands) {
         .with_max_distance(FLOOR_RAY_PRE_LEN)
         .with_max_hits(1)
         .with_query_filter(SpatialQueryFilter {
-            mask: LayerMask::NONE | PLAYER_FLOOR_LAYER,
+            mask: LayerMask::ALL,
             excluded_entities: Default::default(),
         });
 

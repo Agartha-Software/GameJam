@@ -21,7 +21,7 @@ use bevy::{
     transform::components::Transform,
 };
 
-use crate::{player::PLAYER_FLOOR_LAYER, speaker::Speaker};
+use crate::speaker::Speaker;
 
 const MONSTER_GRAVITY: f32 = 5.0;
 
@@ -195,7 +195,7 @@ pub fn spawn_monster(
     let floor_cast = RayCaster::new(Vec3::Z * MONSTER_RAY_PRE_LEN, Dir3::NEG_Z)
         .with_max_hits(1)
         .with_query_filter(SpatialQueryFilter {
-            mask: LayerMask::NONE | PLAYER_FLOOR_LAYER,
+            mask: LayerMask::ALL,
             excluded_entities: Default::default(),
         });
 
