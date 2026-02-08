@@ -199,7 +199,7 @@ fn spawn_ground(
                     ColliderConstructor::TrimeshFromMesh,
                     NotShadowCaster,
                     RigidBody::Static,
-                    CollisionMargin(1.),
+                    CollisionMargin(0.1),
                 ));
             }
         }

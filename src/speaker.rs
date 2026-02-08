@@ -200,16 +200,19 @@ pub fn ungrab(
     player: Entity,
 ) {
     *tm = player_tm.compute_transform();
+    tm.translation.z += 0.7;
+    tm.translation += player_tm.up() * 0.5;
     // commands.entity(entity).remove::<ChildOf>();
     commands.entity(player).detach_child(entity);
     commands
         .entity(entity)
+        .remove::<ColliderDisabled>()
         .remove::<RigidBodyDisabled>()
         .remove::<GravityScale>();
 }
 
 pub fn grab(commands: &mut Commands, entity: Entity, tm: &mut Transform, player: Entity) {
-    *tm = Transform::from_xyz(0.3, -1.4, -0.7).with_rotation(Quat::from_euler(
+    *tm = Transform::from_xyz(0.3, -0.74, -0.7).with_rotation(Quat::from_euler(
         EulerRot::XYZ,
         -90.0f32.to_radians(),
         0.0,
@@ -218,6 +221,7 @@ pub fn grab(commands: &mut Commands, entity: Entity, tm: &mut Transform, player:
     commands.entity(player).add_child(entity);
     commands
         .entity(entity)
+        .insert(ColliderDisabled)
         .insert(RigidBodyDisabled)
         .insert(GravityScale(0.));
 }
