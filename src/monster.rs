@@ -1,6 +1,6 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, ops::Neg};
 
-use avian3d::prelude::LinearVelocity;
+use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, RayHits, SpatialQueryFilter};
 use bevy::{
     app::{Plugin, Startup, Update},
     asset::{AssetServer, Assets, Handle},
@@ -8,25 +8,30 @@ use bevy::{
     color::{Color, LinearRgba},
     ecs::{
         component::Component,
+        entity::Entity,
         query::Without,
         resource::Resource,
         system::{Commands, Local, Query, Res, ResMut},
     },
     gltf::Gltf,
-    math::Vec3,
+    math::{Dir3, FloatPow, Vec3},
     pbr::StandardMaterial,
     scene::SceneRoot,
     time::Time,
     transform::components::Transform,
 };
 
-use crate::speaker::Speaker;
+use crate::{player::PLAYER_FLOOR_LAYER, speaker::Speaker};
 
 const MONSTER_GRAVITY: f32 = 5.0;
 
 const MONSTER_MAX_STALKING_SPEED: f32 = 40.0 / 3.6;
+const MONSTER_MIN_STALKING_SPEED: f32 = 20.0 / 3.6;
 
 const MONSTER_TURN_AMOUNT: f32 = 0.1;
+
+const MONSTER_HOVER_HEIGHT: f32 = 8.0;
+const MONSTER_RAY_PRE_LEN: f32 = 4.0;
 
 pub struct MonsterPlugin;
 
@@ -47,11 +52,12 @@ pub enum MonsterAgro {
     Bored,
 }
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct Monster {
     agro: MonsterAgro,
     agressivity: f32,
     direction: f32,
+    caster: Entity,
 }
 
 #[derive(Resource)]
@@ -66,10 +72,14 @@ pub fn monster_system(
     time: Res<Time>,
     monsters: Query<(&mut Monster, &mut Transform, &mut LinearVelocity), Without<Speaker>>,
     speakers: Query<(&Speaker, &Transform)>,
+    mut casters: Query<(&RayHits, &mut Transform), (Without<Speaker>, Without<Monster>)>,
 ) {
     let sounds = speakers.iter().map(|(s, t)| (s, &t.translation));
     for (mut monster, mut transform, mut velocity) in monsters {
-        monster.behavior(&time, &mut transform, &mut velocity, sounds.clone());
+        if let Ok((rays, mut caster_transform)) = casters.get_mut(monster.caster) {
+            monster.behavior(&time, &mut transform, &mut velocity, rays, sounds.clone());
+            caster_transform.translation = transform.translation;
+        }
     }
 }
 
@@ -79,6 +89,7 @@ impl Monster {
         time: &Time,
         transform: &mut Transform,
         velocity: &mut LinearVelocity,
+        rays: &RayHits,
         sounds: I,
     ) {
         let sounds = sounds.into_iter();
@@ -101,12 +112,16 @@ impl Monster {
         match self.agro {
             MonsterAgro::Stalking => {
                 let (loudness, speaker, v) = speaker;
-                if v.z > 0.0 {
-                    velocity.0.z *= -1.0;
-                }
                 velocity.0 += v * MONSTER_GRAVITY * time.delta_secs() * time.delta_secs();
                 let (v, m) = velocity.0.normalize_and_length();
-                velocity.0 = v * m.min(MONSTER_MAX_STALKING_SPEED);
+                velocity.0 = v * m.clamp(MONSTER_MIN_STALKING_SPEED, MONSTER_MAX_STALKING_SPEED);
+
+                let mut distance =
+                    rays.first().map(|hit| hit.distance).unwrap_or(-10.0) - MONSTER_RAY_PRE_LEN;
+                transform.translation.z += distance.neg().max(0.0);
+                distance += velocity.z * 1.0;
+                velocity.0.z +=
+                    (MONSTER_HOVER_HEIGHT - distance).max(0.0).squared() * time.delta_secs();
             }
             _ => {} // MonsterAgro::Hunting => todo!(),
                     // MonsterAgro::Bored => todo!(),
@@ -182,12 +197,26 @@ pub fn spawn_monster(
         .unwrap()
         .clone();
 
+    let floor_cast = RayCaster::new(Vec3::Z * MONSTER_RAY_PRE_LEN, Dir3::NEG_Z)
+        .with_max_hits(1)
+        .with_query_filter(SpatialQueryFilter {
+            mask: LayerMask::NONE | PLAYER_FLOOR_LAYER,
+            excluded_entities: Default::default(),
+        });
+
+    let caster = commands.spawn((Transform::default(), floor_cast)).id();
+
     commands.spawn((
         SceneRoot(gltf.scenes[0].clone()),
-        Monster::default(),
+        Monster {
+            caster,
+            agro: MonsterAgro::Stalking,
+            agressivity: 0.0,
+            direction: 0.0,
+        },
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::from(Vec3::new(0.0, 5.0, 1.0)),
-        Transform::from_xyz(20.0, 3.0, 5.0),
+        Transform::from_xyz(20.0, 3.0, 30.0),
         Visibility::default(),
     ));
 }
