@@ -133,11 +133,11 @@ fn spawn_world(
     commands.spawn((
         SpotLight {
             color: Color::srgb_u8(255, 252, 220),
-            intensity: 300000000000_f32,
+            intensity: 200000000000_f32,
             range: 500.0,
             radius: 0.5,
             shadows_enabled: false,
-            outer_angle: PI / 2.0 * 0.016,
+            outer_angle: PI / 2.0 * 0.013,
             ..Default::default()
         },
         Transform::from_xyz(-62.0, -83.0, 493.0).looking_to(-Vec3::Z, Vec3::Z),

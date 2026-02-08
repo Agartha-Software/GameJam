@@ -15,11 +15,9 @@ pub fn control_flashlight(
     if mouse.just_pressed(MouseButton::Left) {
         if **flashlight == Visibility::Hidden {
             **flashlight = Visibility::Visible;
-            cam.falloff = FogFalloff::Exponential { density: 0.2 };
             hand_ui.color = Color::WHITE;
         } else {
             **flashlight = Visibility::Hidden;
-            cam.falloff = FogFalloff::Exponential { density: 0.3 };
             hand_ui.color = Color::srgb(0.5, 0.5, 0.5);
         }
     }

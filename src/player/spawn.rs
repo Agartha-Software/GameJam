@@ -5,6 +5,8 @@ use bevy::color::palettes::tailwind;
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::light::NotShadowCaster;
 use bevy::post_process::bloom::Bloom;
+use bevy::post_process::dof::DepthOfField;
+use bevy::post_process::effect_stack::ChromaticAberration;
 use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
 
@@ -42,10 +44,20 @@ pub fn spawn_player(
                         ..default()
                     }),
                     Bloom::OLD_SCHOOL,
+                    ChromaticAberration {
+                        intensity: 0.02,
+                        max_samples: 6,
+                        ..Default::default()
+                    },
+                    DepthOfField {
+                        focal_distance: 1.,
+                        aperture_f_stops: 2.,
+                        ..Default::default()
+                    },
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
                         color: Color::srgb_u8(3, 3, 3),
-                        falloff: FogFalloff::Exponential { density: 0.20 },
+                        falloff: FogFalloff::Exponential { density: 0.25 },
                         ..default()
                     },
                 ),
