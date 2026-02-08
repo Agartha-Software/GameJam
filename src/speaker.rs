@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use avian3d::prelude::LinearVelocity;
 use bevy::math::FloatPow;
 use bevy::prelude::*;
@@ -184,8 +182,7 @@ pub fn speaker_preupdate(
         {
             SpeakerMode::Ready(e)
         } else {
-            speaker_resource.time += time.elapsed_secs();
-            // speaker_resource.time = speaker_resource.time % PI;
+            speaker_resource.time += (power * 40.0) * time.delta_secs();
             SpeakerMode::Blink(speaker_resource.time.sin().abs().squared())
         }
     } else {
@@ -194,16 +191,6 @@ pub fn speaker_preupdate(
 
     apply_color(&speaker_resource, &mut materials);
 }
-
-const GRAB_TM: Transform = Transform {
-    translation: Vec3 {
-        x: 0.1,
-        y: -0.2,
-        z: -1.,
-    },
-    rotation: Quat::IDENTITY,
-    scale: Vec3::ONE,
-};
 
 pub fn ungrab(
     commands: &mut Commands,
