@@ -128,10 +128,6 @@ pub fn move_op(
     transform.translation += moveforce * time.delta_secs() * 30.;
 }
 
-pub fn log_player_pos(player: Single<&GlobalTransform, (With<Player>, Without<PlayerCamera>)>) {
-    //println!("at: {:?}", player.translation());
-}
-
 pub fn move_player(
     time: Res<Time>,
     inputs: Res<ButtonInput<KeyCode>>,

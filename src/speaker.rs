@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use avian3d::prelude::LinearVelocity;
 use bevy::math::FloatPow;
 use bevy::prelude::*;
@@ -19,6 +21,7 @@ use bevy::{
 };
 
 use crate::node::OilNode;
+use crate::player::marker::Pickup;
 
 pub struct SpeakerPlugin;
 
@@ -68,6 +71,7 @@ pub struct SpeakerResource {
     pub model: Handle<Gltf>,
     pub material_blink: Option<Handle<StandardMaterial>>,
     pub mode: SpeakerMode,
+    pub time: f32,
 }
 
 fn load_speaker_gltf(mut commands: Commands, assets: Res<AssetServer>) {
@@ -77,6 +81,7 @@ fn load_speaker_gltf(mut commands: Commands, assets: Res<AssetServer>) {
         model,
         material_blink: None,
         mode: SpeakerMode::None,
+        time: 0.0,
     });
 }
 
@@ -104,6 +109,7 @@ fn spawn_speaker(
 
     commands.spawn((
         SceneRoot(gltf.scenes[0].clone()),
+        Pickup,
         Speaker::default(),
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::default(),
@@ -131,8 +137,9 @@ const NODE_SPEAKER_ACTIVATION_DIST_2: f32 =
 
 fn bias(speaker: &GlobalTransform, node: &GlobalTransform) -> f32 {
     let d = node.translation() - speaker.translation();
-    let alignment = speaker.up().dot(d) + 2.0;
-    (alignment / d.length()).max(0.0)
+    let alignment = speaker.up().dot(d.normalize()) + 2.0;
+    let dist = d.length().max(NODE_SPEAKER_ACTIVATION_DIST);
+    (alignment / dist).max(0.0)
 }
 
 pub fn apply_color(speaker_resource: &SpeakerResource, materials: &mut Assets<StandardMaterial>) {
@@ -177,11 +184,45 @@ pub fn speaker_preupdate(
         {
             SpeakerMode::Ready(e)
         } else {
-            SpeakerMode::Blink((power * time.elapsed_secs()).sin().abs().squared())
+            speaker_resource.time += time.elapsed_secs();
+            // speaker_resource.time = speaker_resource.time % PI;
+            SpeakerMode::Blink(speaker_resource.time.sin().abs().squared())
         }
     } else {
         SpeakerMode::None
     };
 
     apply_color(&speaker_resource, &mut materials);
+}
+
+const GRAB_TM: Transform = Transform {
+    translation: Vec3 {
+        x: 0.1,
+        y: -0.2,
+        z: -1.,
+    },
+    rotation: Quat::IDENTITY,
+    scale: Vec3::ONE,
+};
+
+pub fn ungrab(
+    commands: &mut Commands,
+    entity: Entity,
+    tm: &mut Transform,
+    player_tm: &GlobalTransform,
+    player: Entity,
+) {
+    *tm = player_tm.compute_transform();
+    // commands.entity(entity).remove::<ChildOf>();
+    commands.entity(player).detach_child(entity);
+}
+
+pub fn grab(commands: &mut Commands, entity: Entity, tm: &mut Transform, player: Entity) {
+    *tm = Transform::from_xyz(0.3, -1.4, -0.7).with_rotation(Quat::from_euler(
+        EulerRot::XYZ,
+        -90.0f32.to_radians(),
+        0.0,
+        0.0,
+    ));
+    commands.entity(player).add_child(entity);
 }
