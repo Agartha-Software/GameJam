@@ -1,16 +1,28 @@
 use avian3d::prelude::LinearVelocity;
 use bevy::{
-    asset::Assets,
-    color::Color,
+    app::{Plugin, Startup, Update},
+    asset::{AssetServer, Assets, Handle},
+    color::LinearRgba,
     ecs::{
         component::Component,
-        system::{Commands, ResMut},
+        resource::Resource,
+        system::{Commands, Local, Res, ResMut},
     },
-    math::{Vec3, primitives},
-    mesh::{Mesh, Mesh3d},
-    pbr::{MeshMaterial3d, StandardMaterial},
+    gltf::Gltf,
+    math::Vec3,
+    pbr::StandardMaterial,
+    scene::SceneRoot,
     transform::components::Transform,
 };
+
+pub struct SpeakerPlugin;
+
+impl Plugin for SpeakerPlugin {
+    fn build(&self, app: &mut bevy::app::App) {
+        app.add_systems(Startup, load_speaker_gltf)
+            .add_systems(Update, spawn_speaker);
+    }
+}
 
 #[derive(Component)]
 pub struct Speaker {
@@ -37,21 +49,55 @@ impl Speaker {
     }
 }
 
-pub fn spawn_speaker(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let cube = meshes.add(primitives::Cuboid::new(0.5, 0.5, 0.5));
+#[derive(Resource)]
+struct SpeakerAssets {
+    model: Handle<Gltf>,
+    material_blink: Option<Handle<StandardMaterial>>,
+}
 
-    let mat = materials.add(StandardMaterial::from_color(Color::srgb(0.7, 0.4, 0.12)));
+fn load_speaker_gltf(mut commands: Commands, assets: Res<AssetServer>) {
+    let model = assets.load::<Gltf>("speaker.glb");
+
+    commands.insert_resource(SpeakerAssets {
+        model,
+        material_blink: None,
+    });
+}
+
+fn spawn_speaker(
+    mut commands: Commands,
+    gltf: Res<Assets<Gltf>>,
+    mut speaker_assets: ResMut<SpeakerAssets>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut stop: Local<bool>,
+) {
+    if *stop {
+        return;
+    }
+
+    let Some(gltf) = gltf.get(&speaker_assets.model) else {
+        return;
+    };
+
+    let Some(blink) = gltf.named_materials.get("light") else {
+        return;
+    };
+
+    let Some(material) = materials.get_mut(blink) else {
+        return;
+    };
+
+    material.emissive = LinearRgba::rgb(0.0, 4.0, 0.0);
+
+    speaker_assets.material_blink = Some(blink.clone());
+
+    *stop = true;
 
     commands.spawn((
-        Mesh3d(cube),
-        MeshMaterial3d(mat),
+        SceneRoot(gltf.scenes[0].clone()),
         Speaker::default(),
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::default(),
-        Transform::from_xyz(3.0, 1.0, 0.5),
+        Transform::from_xyz(-64.0, -81.0, 22.25),
     ));
 }

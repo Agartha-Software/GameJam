@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use avian3d::prelude::LinearVelocity;
 use bevy::{
-    app::{Plugin, PostStartup, Startup, Update},
+    app::{Plugin, Startup, Update},
     asset::{AssetServer, Assets, Handle},
     camera::visibility::Visibility,
     color::{Color, LinearRgba},
@@ -12,11 +12,10 @@ use bevy::{
         resource::Resource,
         system::{Commands, Local, Query, Res, ResMut},
     },
-    gltf::{Gltf, GltfAssetLabel},
+    gltf::Gltf,
     math::Vec3,
-    mesh::Mesh,
     pbr::StandardMaterial,
-    scene::{Scene, SceneRoot},
+    scene::SceneRoot,
     time::Time,
     transform::components::Transform,
 };

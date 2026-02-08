@@ -15,7 +15,7 @@ use particle::ParticlePlugin;
 
 use crate::{
     debug::DebugPlugin, monster::MonsterPlugin, player::PlayerPlugin, settings::Settings,
-    speaker::spawn_speaker, ui::UiPlugin, world::WorldPlugin,
+    speaker::SpeakerPlugin, ui::UiPlugin, world::WorldPlugin,
 };
 
 fn main() {
@@ -49,7 +49,7 @@ fn main() {
             WorldPlugin,
             PlayerPlugin,
             MonsterPlugin,
+            SpeakerPlugin,
         ))
-        .add_systems(Startup, spawn_speaker)
         .run();
 }
