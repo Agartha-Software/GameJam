@@ -6,7 +6,6 @@ pub struct Settings {
     pub inputs: Inputs,
     pub debug: bool,
     pub debug_display: bool,
-    pub chromatic_aberation: f32,
 }
 
 pub struct Inputs {
@@ -38,7 +37,6 @@ impl Default for Settings {
             inputs: Default::default(),
             debug: false,
             debug_display: false,
-            chromatic_aberation: 1.2,
         }
     }
 }

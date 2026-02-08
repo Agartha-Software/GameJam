@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{light::NotShadowCaster, prelude::*};
 use bevy_atmosphere::prelude::*;
 use bevy_sprite3d::prelude::*;
 
@@ -100,7 +100,22 @@ fn spawn_world(
             .with_scale(Vec3::splat(3.)),
     ));
 
-    for i in 0..72 {
+    ladder_parent.with_child((
+        Sprite3d {
+            pixels_per_metre: 400.,
+            alpha_mode: AlphaMode::Blend,
+            unlit: true,
+            // pivot: Some(Vec2::new(0.5, 0.5)),
+            ..default()
+        },
+        Sprite {
+            image: ladder.0.clone(),
+            ..default()
+        },
+        Visibility::Visible,
+        Transform::from_xyz(0., 0., 0.),
+    ));
+    for i in 1..72 {
         ladder_parent.with_child((
             Sprite3d {
                 pixels_per_metre: 400.,
@@ -113,6 +128,7 @@ fn spawn_world(
                 image: ladder.0.clone(),
                 ..default()
             },
+            NotShadowCaster,
             Visibility::Visible,
             Transform::from_xyz(0., i as f32 * 2.24, 0.),
         ));
@@ -122,10 +138,11 @@ fn spawn_world(
         Mesh3d(meshes.add(Capsule3d::default().mesh().latitudes(7).longitudes(7))),
         MeshMaterial3d(materials.add(Color::srgb_u8(165, 42, 42))),
         Transform::from_xyz(-62.0, -83.0, 500.0).with_scale(Vec3::splat(14.)),
+        NotShadowCaster,
     ));
     let mut light_mat = StandardMaterial::default();
-    light_mat.base_color = Color::linear_rgb(7.0, 7.0, 5.0);
-    light_mat.emissive = LinearRgba::rgb(70.0, 70.0, 50.0);
+    light_mat.base_color = Color::linear_rgb(12.0, 12.0, 5.0);
+    light_mat.emissive = LinearRgba::rgb(120.0, 120.0, 50.0);
     light_mat.fog_enabled = false;
 
     let light_mesh = meshes.add(Sphere::default().mesh().uv(12, 8));
@@ -136,7 +153,7 @@ fn spawn_world(
             intensity: 200000000000_f32,
             range: 500.0,
             radius: 0.5,
-            shadows_enabled: false,
+            shadows_enabled: true,
             outer_angle: PI / 2.0 * 0.013,
             ..Default::default()
         },
@@ -145,16 +162,19 @@ fn spawn_world(
     commands.spawn((
         Mesh3d(light_mesh.clone()),
         MeshMaterial3d(materials.add(light_mat.clone())),
+        NotShadowCaster,
         Transform::from_xyz(-62.0, -89.0, 493.0).with_scale(Vec3::splat(0.5)),
     ));
     commands.spawn((
         Mesh3d(light_mesh.clone()),
         MeshMaterial3d(materials.add(light_mat.clone())),
+        NotShadowCaster,
         Transform::from_xyz(-59.0, -78.0, 493.0).with_scale(Vec3::splat(0.5)),
     ));
     commands.spawn((
         Mesh3d(light_mesh),
         MeshMaterial3d(materials.add(light_mat)),
+        NotShadowCaster,
         Transform::from_xyz(-65.0, -78.0, 493.0).with_scale(Vec3::splat(0.5)),
     ));
 }
@@ -176,6 +196,7 @@ fn spawn_ground(
             if let Ok(e) = meshs.get_mut(entity) {
                 commands.entity(e).insert((
                     ColliderConstructor::TrimeshFromMesh,
+                    NotShadowCaster,
                     CollisionLayers::new(PLAYER_FLOOR_LAYER, 0),
                 ));
             }

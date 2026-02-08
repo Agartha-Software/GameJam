@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// Acceleration in m/s^2
-pub const PLAYER_ACCELERATION: f32 = 100.0 / 3.6;
+pub const PLAYER_ACCELERATION: f32 = 160.0 / 3.6;
 
 /// Velocity in m/s calculated from km/h
 pub const PLAYER_MAX_SPEED: f32 = 2.9 / 3.6;
@@ -126,6 +126,10 @@ pub fn move_op(
     }
 
     transform.translation += moveforce * time.delta_secs() * 30.;
+}
+
+pub fn log_player_pos(player: Single<&GlobalTransform, (With<Player>, Without<PlayerCamera>)>) {
+    //println!("at: {:?}", player.translation());
 }
 
 pub fn move_player(

@@ -1,9 +1,8 @@
 use std::f32::consts::PI;
 
-use bevy::camera::visibility::RenderLayers;
 use bevy::color::palettes::tailwind;
+use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::core_pipeline::tonemapping::Tonemapping;
-use bevy::light::NotShadowCaster;
 use bevy::post_process::bloom::Bloom;
 use bevy::post_process::dof::DepthOfField;
 use bevy::post_process::effect_stack::ChromaticAberration;
@@ -14,10 +13,7 @@ use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter}
 
 use crate::player::flashlight::Flashlight;
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
-use crate::player::{
-    DEFAULT_RENDER_LAYER, PLAYER_FLOOR_LAYER, Player, PlayerCamera, VIEW_MODEL_RENDER_LAYER,
-    WorldModelCamera,
-};
+use crate::player::{PLAYER_FLOOR_LAYER, Player, PlayerCamera, WorldModelCamera};
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -49,6 +45,7 @@ pub fn spawn_player(
                         max_samples: 6,
                         ..Default::default()
                     },
+                    DepthPrepass,
                     DepthOfField {
                         focal_distance: 1.,
                         aperture_f_stops: 2.,
@@ -60,34 +57,6 @@ pub fn spawn_player(
                         falloff: FogFalloff::Exponential { density: 0.25 },
                         ..default()
                     },
-                ),
-                // Spawn view model camera.
-                (
-                    Camera3d::default(),
-                    Camera {
-                        // Bump the order to render on top of the world model.
-                        order: 1,
-                        ..default()
-                    },
-                    Bloom::OLD_SCHOOL,
-                    IsDefaultUiCamera,
-                    Tonemapping::TonyMcMapface,
-                    Projection::from(PerspectiveProjection {
-                        fov: 80.0_f32.to_radians(),
-                        ..default()
-                    }),
-                    // Only render objects belonging to the view model.
-                    RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
-                ),
-                // Spawn the player's right arm.
-                (
-                    Mesh3d(arm),
-                    MeshMaterial3d(arm_material),
-                    Transform::from_xyz(0.2, -0.1, -0.25),
-                    // Ensure the arm is only rendered by the view model camera.
-                    RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
-                    // The arm is free-floating, so shadows would look weird.
-                    NotShadowCaster,
                 ),
                 (
                     SpotLight {
@@ -101,7 +70,6 @@ pub fn spawn_player(
                         ..default()
                     },
                     Flashlight,
-                    RenderLayers::from_layers(&[DEFAULT_RENDER_LAYER]),
                     Transform::from_xyz(-0.2, 0.2, 0.5)
                         .looking_to(Vec3::new(0., -0.05, -1.), Vec3::Z),
                 )
