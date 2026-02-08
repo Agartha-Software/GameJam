@@ -1,4 +1,7 @@
-use std::ops::{Add, Sub};
+use std::{
+    ops::{Add, Sub},
+    process::exit,
+};
 
 use avian3d::prelude::*;
 use bevy::prelude::*;
@@ -32,6 +35,9 @@ pub fn player_place_marker(
     ));
 }
 
+#[derive(Resource, Default)]
+pub struct Placed(u32);
+
 pub fn player_action(
     mut commands: Commands,
     time: Res<Time>,
@@ -63,6 +69,7 @@ pub fn player_action(
         (Entity, &GlobalTransform),
         (Without<Player>, Without<PlayerCamera>, Without<Pickup>),
     >,
+    mut placed: Local<Placed>,
 ) {
     let (player_entity, player_global, mut player_tm, mut player, player_hits) =
         player.into_inner();
@@ -108,6 +115,10 @@ pub fn player_action(
                         && input.just_pressed(MouseButton::Left)
                         && !player_hits.is_empty()
                     {
+                        placed.0 += 1;
+                        if placed.0 == 4 {
+                            exit(0);
+                        }
                         player_place_marker(
                             &mut commands,
                             node.clone(),
@@ -138,6 +149,7 @@ pub fn player_action(
         }
         PlayerAction::Dying(timeout, e) => {
             if timeout.gt(&1.0) {
+                exit(0);
                 Some(PlayerAction::Dead)
             } else {
                 if let Ok((_, global)) = entities.get(e.entity()) {
