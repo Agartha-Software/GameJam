@@ -12,8 +12,16 @@ pub struct WorldPlugin;
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(Sprite3dPlugin)
-            .add_systems(Startup, (load_ground_gltf, load_ladder, setup_world))
-            .add_systems(Update, (spawn_ground, spawn_ladder))
+            .add_systems(
+                Startup,
+                (
+                    load_ground_gltf,
+                    load_ladder,
+                    setup_world,
+                    play_background_audio,
+                ),
+            )
+            .add_systems(Update, (spawn_ground, spawn_world))
             .insert_resource(Ladder::default());
     }
 }
@@ -56,11 +64,17 @@ fn load_ladder(asset_server: Res<AssetServer>, mut ladder: ResMut<Ladder>) {
     ladder.0 = asset_server.load("ladder.png");
 }
 
-fn spawn_ladder(
+fn play_background_audio(asset_server: Res<AssetServer>, mut commands: Commands) {
+    commands.spawn((
+        AudioPlayer::new(asset_server.load("ambience.wav")),
+        PlaybackSettings::LOOP,
+    ));
+}
+
+fn spawn_world(
     asset_server: Res<AssetServer>,
     ladder: Res<Ladder>,
     mut meshes: ResMut<Assets<Mesh>>,
-    images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
     mut loaded: Local<bool>,
