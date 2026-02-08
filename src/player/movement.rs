@@ -7,10 +7,10 @@ use crate::{
 };
 
 /// Acceleration in m/s^2
-pub const PLAYER_ACCELERATION: f32 = 120.0 / 3.6;
+pub const PLAYER_ACCELERATION: f32 = 100.0 / 3.6;
 
 /// Velocity in m/s calculated from km/h
-pub const PLAYER_MAX_SPEED: f32 = 3.0 / 3.6;
+pub const PLAYER_MAX_SPEED: f32 = 2.9 / 3.6;
 /// Velocity squared to optimize comparaisons
 pub const PLAYER_MAX_SPEED_2: f32 = PLAYER_MAX_SPEED * PLAYER_MAX_SPEED;
 
