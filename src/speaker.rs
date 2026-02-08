@@ -1,4 +1,5 @@
 use avian3d::prelude::*;
+use bevy::audio::SpatialScale;
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 
@@ -86,6 +87,7 @@ fn load_speaker_gltf(mut commands: Commands, assets: Res<AssetServer>) {
 fn spawn_speaker(
     mut commands: Commands,
     gltf: Res<Assets<Gltf>>,
+    asset_server: Res<AssetServer>,
     mut speaker_resource: ResMut<SpeakerResource>,
     mut stop: Local<bool>,
 ) {
@@ -112,6 +114,11 @@ fn spawn_speaker(
         Collider::cuboid(0.9, 0.75, 1.5),
         RigidBody::Dynamic,
         Transform::from_xyz(-64.0, -81.0, 22.5),
+        AudioPlayer::new(asset_server.load("ping.mp3")),
+        PlaybackSettings::LOOP
+            .with_spatial(true)
+            .with_spatial_scale(SpatialScale::new(0.5))
+            .with_volume(bevy::audio::Volume::Linear(0.25)),
     ));
 }
 

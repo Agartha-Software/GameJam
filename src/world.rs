@@ -69,7 +69,7 @@ fn load_ladder(asset_server: Res<AssetServer>, mut ladder: ResMut<Ladder>) {
 fn play_background_audio(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         AudioPlayer::new(asset_server.load("ambience.wav")),
-        PlaybackSettings::LOOP,
+        PlaybackSettings::LOOP.with_volume(bevy::audio::Volume::Linear(0.06)),
     ));
 }
 

@@ -52,6 +52,7 @@ pub fn spawn_player(mut commands: Commands) {
                         falloff: FogFalloff::Exponential { density: 0.25 },
                         ..default()
                     },
+                    SpatialListener::new(4.0),
                 ),
                 (
                     SpotLight {
