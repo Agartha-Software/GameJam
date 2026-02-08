@@ -35,6 +35,9 @@ pub struct OverlayImage {
     accu: Vec2,
 }
 
+#[derive(Component)]
+pub struct Cursor;
+
 fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud>) {
     commands.entity(hud.0).with_children(|parent| {
         parent.spawn((
@@ -48,6 +51,23 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud
             Outline::new(Val::Px(200.0), Val::Px(0.0), Color::BLACK),
             OverlayImage::default(),
         ));
+        parent.spawn((
+            Node {
+                top: Val::Px((900.0 - 70.0) / 2.),
+                left: Val::Px((1600.0 - 70.0) / 2.),
+                position_type: PositionType::Absolute,
+                width: Val::Px(70.0),
+                height: Val::Px(70.0),
+                ..Default::default()
+            },
+            Visibility::Hidden,
+            Cursor,
+            ImageNode {
+                image: asset_server.load("hand_icon.png"),
+                color: Color::WHITE,
+                ..Default::default()
+            },
+        ));
     });
 }
 
@@ -57,13 +77,13 @@ fn move_overlay(
     time: Res<Time>,
 ) {
     let (mut node, mut overlay_data) = overlay.into_inner();
-    overlay_data.accu += accumulated_mouse_motion.delta / 3000.0;
+    overlay_data.accu += accumulated_mouse_motion.delta / 4.0;
     overlay_data.accu = overlay_data
         .accu
-        .clamp(Vec2::new(-0.6, -0.2), Vec2::new(0.6, 0.2));
+        .clamp(Vec2::new(-80.0, -30.0), Vec2::new(80.0, 30.0));
     let accu = overlay_data.accu;
-    overlay_data.accu /= 1. + 2. * 0.9 * accu.abs() * time.delta_secs();
+    overlay_data.accu /= 1. + 2. * 0.3 * accu.abs() * time.delta_secs();
 
     node.left = Val::Px(-overlay_data.accu.x);
-    node.top = Val::Px(-overlay_data.accu.y + ((time.elapsed_secs() * 1.3).sin() / 18.));
+    node.top = Val::Px(-overlay_data.accu.y + ((time.elapsed_secs() * 1.2).sin() * 4.0));
 }

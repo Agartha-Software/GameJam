@@ -1,11 +1,11 @@
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{camera::visibility::RenderLayers, prelude::*};
+use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
 use bevy_sprite3d::prelude::*;
 
-use crate::player::{PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER};
+use crate::player::PLAYER_FLOOR_LAYER;
 
 pub struct WorldPlugin;
 
@@ -60,7 +60,7 @@ fn spawn_ladder(
     asset_server: Res<AssetServer>,
     ladder: Res<Ladder>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut images: ResMut<Assets<Image>>,
+    images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
     mut loaded: Local<bool>,
@@ -78,11 +78,12 @@ fn spawn_ladder(
 
     *loaded = true;
 
-    let mut ladder_parent = commands.spawn(
+    let mut ladder_parent = commands.spawn((
+        Visibility::Visible,
         Transform::from_xyz(-62.0, -83.0, 25.5)
             .looking_to(Vec3::Y, Vec3::Z)
             .with_scale(Vec3::splat(3.)),
-    );
+    ));
 
     for i in 0..72 {
         ladder_parent.with_child((
@@ -97,6 +98,7 @@ fn spawn_ladder(
                 image: ladder.0.clone(),
                 ..default()
             },
+            Visibility::Visible,
             Transform::from_xyz(0., i as f32 * 2.24, 0.),
         ));
     }
