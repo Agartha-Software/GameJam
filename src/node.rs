@@ -37,17 +37,33 @@ pub fn spawn_world_nodes(
     *loaded = true;
 
     for transform in [
-        Transform::from_xyz(-62.0, -81.0, 22.15).with_rotation(Quat::from_euler(
+        Transform::from_xyz(-62.5, -80.9, 22.16).with_rotation(Quat::from_euler(
             EulerRot::XYZ,
-            4.5 * PI / 180.,
-            4.5 * PI / 180.,
+            0.0783,
+            0.068,
             0.,
         )),
-        Transform::from_xyz(-42.0, -81.0, 22.0),
-        Transform::from_xyz(-42.0, -61.0, 22.0),
-        Transform::from_xyz(0.0, 0.0, 22.0),
+        Transform::from_xyz(-130., 74., 52.9).with_rotation(Quat::from_euler(
+            EulerRot::XYZ,
+            0.3,
+            -0.03,
+            0.,
+        )),
+        Transform::from_xyz(-186.7, -111., 53.6).with_rotation(Quat::from_euler(
+            EulerRot::XYZ,
+            -0.34,
+            -0.06,
+            0.,
+        )),
+        Transform::from_xyz(173.4, 46.4, 16.7).with_rotation(Quat::from_euler(
+            EulerRot::XYZ,
+            0.19,
+            -0.07,
+            0.,
+        )),
     ] {
         commands.spawn((
+            Name::new("Decal"),
             Sprite3d {
                 pixels_per_metre: 400.,
                 alpha_mode: AlphaMode::Blend,
@@ -62,7 +78,7 @@ pub fn spawn_world_nodes(
             NotShadowCaster,
             Visibility::Visible,
             OilNode,
-            transform.with_scale(Vec3::splat(20.)),
+            transform.with_scale(Vec3::splat(40.)),
         ));
     }
 }

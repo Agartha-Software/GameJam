@@ -1,5 +1,5 @@
 use avian3d::{math::PI, prelude::*};
-use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
+use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*, window::CursorOptions};
 
 use crate::{
     player::{Player, PlayerCamera},
@@ -129,6 +129,7 @@ pub fn move_op(
 }
 
 pub fn move_player(
+    cursor_options: Single<&CursorOptions>,
     time: Res<Time>,
     inputs: Res<ButtonInput<KeyCode>>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
@@ -144,12 +145,14 @@ pub fn move_player(
 
     player_transform.translation += velocity.0 * time.delta_secs();
 
-    move_player_camera(
-        &accumulated_mouse_motion.delta,
-        &mut player_transform,
-        &mut camera_transform,
-        settings.camera_sensitivity,
-    );
+    if cursor_options.visible == false {
+        move_player_camera(
+            &accumulated_mouse_motion.delta,
+            &mut player_transform,
+            &mut camera_transform,
+            settings.camera_sensitivity,
+        );
+    }
 
     let mut wishdir = get_wishdir(&inputs, &settings.inputs);
 
