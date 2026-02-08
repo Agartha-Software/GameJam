@@ -14,17 +14,21 @@ use bevy::{
         entity::Entity,
         query::Without,
         resource::Resource,
-        system::{Commands, Local, Query, Res, ResMut},
+        system::{Commands, Local, Query, Res, ResMut, Single},
+        world::Mut,
     },
     gltf::Gltf,
     math::{Dir3, FloatPow, Vec3},
     pbr::StandardMaterial,
     scene::SceneRoot,
     time::Time,
-    transform::components::Transform,
+    transform::components::{GlobalTransform, Transform},
 };
 
-use crate::speaker::Speaker;
+use crate::{
+    player::{Player, PlayerAction},
+    speaker::Speaker,
+};
 
 const MONSTER_GRAVITY: f32 = 5.0;
 
@@ -35,6 +39,8 @@ const MONSTER_TURN_AMOUNT: f32 = 0.1;
 
 const MONSTER_HOVER_HEIGHT: f32 = 8.0;
 const MONSTER_RAY_PRE_LEN: f32 = 4.0;
+
+const MONSTER_KILL_RADIUS: f32 = 20.0;
 
 pub struct MonsterPlugin;
 
@@ -72,14 +78,30 @@ pub struct MonsterAssets {
 
 pub fn monster_system(
     time: Res<Time>,
-    monsters: Query<(&mut Monster, &mut Transform, &mut LinearVelocity), Without<Speaker>>,
+    monsters: Query<(Entity, &mut Monster, &mut Transform, &mut LinearVelocity), Without<Speaker>>,
     speakers: Query<(&Speaker, &Transform)>,
-    mut casters: Query<(&RayHits, &mut Transform), (Without<Speaker>, Without<Monster>)>,
+    mut casters: Query<
+        (&RayHits, &mut Transform),
+        (Without<Speaker>, Without<Monster>, Without<Player>),
+    >,
+    player: Single<
+        (Entity, &mut Player, &GlobalTransform, &mut Transform),
+        (Without<Speaker>, Without<Monster>),
+    >,
 ) {
     let sounds = speakers.iter().map(|(s, t)| (s, &t.translation));
-    for (mut monster, mut transform, mut velocity) in monsters {
+    let mut player = player.into_inner();
+    for (entity, mut monster, mut transform, mut velocity) in monsters {
         if let Ok((rays, mut caster_transform)) = casters.get_mut(monster.caster) {
-            monster.behavior(&time, &mut transform, &mut velocity, rays, sounds.clone());
+            monster.behavior(
+                &time,
+                entity,
+                &mut transform,
+                &mut velocity,
+                rays,
+                &mut player,
+                sounds.clone(),
+            );
             caster_transform.translation = transform.translation;
         }
     }
@@ -89,9 +111,16 @@ impl Monster {
     pub fn behavior<'a, I: IntoIterator<Item = (&'a Speaker, &'a Vec3)>>(
         &mut self,
         time: &Time,
+        entity: Entity,
         transform: &mut Transform,
         velocity: &mut LinearVelocity,
         rays: &RayHits,
+        player: &mut (
+            Entity,
+            Mut<'_, Player>,
+            &GlobalTransform,
+            Mut<'_, Transform>,
+        ),
         sounds: I,
     ) {
         let sounds = sounds.into_iter();
@@ -124,9 +153,14 @@ impl Monster {
                 distance += velocity.z * 1.0;
                 velocity.0.z +=
                     (MONSTER_HOVER_HEIGHT - distance).max(0.0).squared() * time.delta_secs();
+                if player.1.action != PlayerAction::Dead
+                    && player.2.translation().distance(transform.translation) < MONSTER_KILL_RADIUS
+                {
+                    player.1.action = PlayerAction::Dying(0.0, entity.clone());
+                }
             }
-            _ => {} // MonsterAgro::Hunting => todo!(),
-                    // MonsterAgro::Bored => todo!(),
+            MonsterAgro::Hunting => {}
+            _ => {} // MonsterAgro::Bored => todo!(),
         }
 
         velocity.0 = velocity.0.rotate_axis(
