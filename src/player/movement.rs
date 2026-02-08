@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// Acceleration in m/s^2
-pub const PLAYER_ACCELERATION: f32 = 160.0 / 3.6;
+pub const PLAYER_ACCELERATION: f32 = 220.0 / 3.6;
 
 /// Velocity in m/s calculated from km/h
 pub const PLAYER_MAX_SPEED: f32 = 2.9 / 3.6;
@@ -15,7 +15,7 @@ pub const PLAYER_MAX_SPEED: f32 = 2.9 / 3.6;
 pub const PLAYER_MAX_SPEED_2: f32 = PLAYER_MAX_SPEED * PLAYER_MAX_SPEED;
 
 // Effective gravity in m/s^2 in Z
-pub const PLAYER_BUOYANCY: f32 = -10.;
+pub const PLAYER_BUOYANCY: f32 = -20.;
 
 // Jump velocity
 pub const PLAYER_JUMP_IMPULSE: f32 = 0.4;

@@ -5,7 +5,10 @@ use bevy::{light::NotShadowCaster, prelude::*};
 use bevy_atmosphere::prelude::*;
 use bevy_sprite3d::prelude::*;
 
-use crate::{node::spawn_world_nodes, player::PLAYER_FLOOR_LAYER};
+use crate::{
+    node::{OilAsset, load_oil, spawn_world_nodes},
+    player::PLAYER_FLOOR_LAYER,
+};
 
 pub struct WorldPlugin;
 
@@ -19,11 +22,12 @@ impl Plugin for WorldPlugin {
                     load_ladder,
                     setup_world,
                     play_background_audio,
-                    spawn_world_nodes,
+                    load_oil,
                 ),
             )
-            .add_systems(Update, (spawn_ground, spawn_world))
-            .insert_resource(Ladder::default());
+            .add_systems(Update, (spawn_ground, spawn_world, spawn_world_nodes))
+            .insert_resource(Ladder::default())
+            .insert_resource(OilAsset::default());
     }
 }
 
@@ -95,7 +99,7 @@ fn spawn_world(
 
     let mut ladder_parent = commands.spawn((
         Visibility::Visible,
-        Transform::from_xyz(-62.0, -83.0, 25.5)
+        Transform::from_xyz(-72.0, -85.0, 25.)
             .looking_to(Vec3::Y, Vec3::Z)
             .with_scale(Vec3::splat(3.)),
     ));
@@ -137,7 +141,7 @@ fn spawn_world(
     commands.spawn((
         Mesh3d(meshes.add(Capsule3d::default().mesh().latitudes(7).longitudes(7))),
         MeshMaterial3d(materials.add(Color::srgb_u8(165, 42, 42))),
-        Transform::from_xyz(-62.0, -83.0, 500.0).with_scale(Vec3::splat(14.)),
+        Transform::from_xyz(-72.0, -85.0, 500.0).with_scale(Vec3::splat(14.)),
         NotShadowCaster,
     ));
     let mut light_mat = StandardMaterial::default();
@@ -150,32 +154,32 @@ fn spawn_world(
     commands.spawn((
         SpotLight {
             color: Color::srgb_u8(255, 252, 220),
-            intensity: 200000000000_f32,
+            intensity: 100000000000_f32,
             range: 500.0,
             radius: 0.5,
             shadows_enabled: true,
-            outer_angle: PI / 2.0 * 0.013,
+            outer_angle: PI / 2.0 * 0.01,
             ..Default::default()
         },
-        Transform::from_xyz(-62.0, -83.0, 493.0).looking_to(-Vec3::Z, Vec3::Z),
+        Transform::from_xyz(-72.0, -85.0, 493.0).looking_to(-Vec3::Z, Vec3::Z),
     ));
     commands.spawn((
         Mesh3d(light_mesh.clone()),
         MeshMaterial3d(materials.add(light_mat.clone())),
         NotShadowCaster,
-        Transform::from_xyz(-62.0, -89.0, 493.0).with_scale(Vec3::splat(2.)),
+        Transform::from_xyz(-72.0, -91.0, 493.0).with_scale(Vec3::splat(2.)),
     ));
     commands.spawn((
         Mesh3d(light_mesh.clone()),
         MeshMaterial3d(materials.add(light_mat.clone())),
         NotShadowCaster,
-        Transform::from_xyz(-59.0, -78.0, 493.0).with_scale(Vec3::splat(2.)),
+        Transform::from_xyz(-69.0, -80.0, 493.0).with_scale(Vec3::splat(2.)),
     ));
     commands.spawn((
         Mesh3d(light_mesh),
         MeshMaterial3d(materials.add(light_mat)),
         NotShadowCaster,
-        Transform::from_xyz(-65.0, -78.0, 493.0).with_scale(Vec3::splat(2.)),
+        Transform::from_xyz(-75.0, -80.0, 493.0).with_scale(Vec3::splat(2.)),
     ));
 }
 

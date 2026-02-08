@@ -89,7 +89,7 @@ pub fn spawn_player(mut commands: Commands) {
             playercast,
             avian3d::dynamics::prelude::RigidBody::Kinematic,
             LinearVelocity::default(),
-            Transform::from_xyz(-62.0, -81.0, 22.0),
+            Transform::from_xyz(-72.0, -83.0, 65.0),
             Visibility::default(),
         ))
         .add_child(camera);
