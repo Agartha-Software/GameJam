@@ -1,11 +1,13 @@
-pub mod debug;
-pub mod monster;
-pub mod particle;
-pub mod player;
-pub mod settings;
-pub mod speaker;
-pub mod ui;
-pub mod world;
+mod debug;
+mod marker;
+mod monster;
+mod node;
+mod particle;
+mod player;
+mod settings;
+mod speaker;
+mod ui;
+mod world;
 
 use avian3d::PhysicsPlugins;
 use bevy::prelude::*;
@@ -14,8 +16,8 @@ use bevy_atmosphere::plugin::AtmospherePlugin;
 use particle::ParticlePlugin;
 
 use crate::{
-    debug::DebugPlugin, monster::MonsterPlugin, player::PlayerPlugin, settings::Settings,
-    speaker::SpeakerPlugin, ui::UiPlugin, world::WorldPlugin,
+    debug::DebugPlugin, marker::MarkerPlugin, monster::MonsterPlugin, player::PlayerPlugin,
+    settings::Settings, speaker::SpeakerPlugin, ui::UiPlugin, world::WorldPlugin,
 };
 
 fn main() {
@@ -49,6 +51,7 @@ fn main() {
             WorldPlugin,
             PlayerPlugin,
             MonsterPlugin,
+            MarkerPlugin,
             SpeakerPlugin,
         ))
         .run();

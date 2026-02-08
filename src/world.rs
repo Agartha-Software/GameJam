@@ -1,18 +1,29 @@
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{camera::visibility::RenderLayers, prelude::*};
+use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
 use bevy_sprite3d::prelude::*;
 
-use crate::player::{PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER};
+use crate::{
+    node::spawn_world_nodes,
+    player::{PLAYER_FLOOR_LAYER, VIEW_MODEL_RENDER_LAYER},
+};
 
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(Sprite3dPlugin)
-            .add_systems(Startup, (load_ground_gltf, load_ladder, setup_world))
+            .add_systems(
+                Startup,
+                (
+                    load_ground_gltf,
+                    load_ladder,
+                    setup_world,
+                    spawn_world_nodes,
+                ),
+            )
             .add_systems(Update, (spawn_ground, spawn_ladder))
             .insert_resource(Ladder::default());
     }

@@ -108,8 +108,8 @@ impl Monster {
                 let (v, m) = velocity.0.normalize_and_length();
                 velocity.0 = v * m.min(MONSTER_MAX_STALKING_SPEED);
             }
-            MonsterAgro::Hunting => todo!(),
-            MonsterAgro::Bored => todo!(),
+            _ => {} // MonsterAgro::Hunting => todo!(),
+                    // MonsterAgro::Bored => todo!(),
         }
 
         velocity.0 = velocity.0.rotate_axis(
