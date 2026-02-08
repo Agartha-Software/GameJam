@@ -61,7 +61,7 @@ pub fn spawn_player(
                     IsDefaultUiCamera,
                     Tonemapping::TonyMcMapface,
                     Projection::from(PerspectiveProjection {
-                        fov: 70.0_f32.to_radians(),
+                        fov: 80.0_f32.to_radians(),
                         ..default()
                     }),
                     // Only render objects belonging to the view model.

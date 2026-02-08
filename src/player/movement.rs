@@ -125,7 +125,7 @@ pub fn move_op(
         moveforce.z = -1.;
     }
 
-    transform.translation += moveforce * time.delta_secs() * 15.;
+    transform.translation += moveforce * time.delta_secs() * 30.;
 }
 
 pub fn move_player(
