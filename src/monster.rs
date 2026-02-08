@@ -1,9 +1,12 @@
 use std::{f32::consts::PI, ops::Neg};
 
-use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, RayHits, SpatialQueryFilter};
+use avian3d::prelude::*;
+use bevy::audio::SpatialScale;
+use bevy::prelude::*;
 use bevy::{
     app::{Plugin, Startup, Update},
     asset::{AssetServer, Assets, Handle},
+    audio::AudioPlayer,
     camera::visibility::Visibility,
     color::{Color, LinearRgba},
     ecs::{
@@ -23,7 +26,7 @@ use bevy::{
 };
 
 use crate::{
-    player::{PLAYER_FLOOR_LAYER, Player, PlayerAction},
+    player::{Player, PlayerAction},
     speaker::Speaker,
 };
 
@@ -200,6 +203,7 @@ pub fn spawn_monster(
     gltf: Res<Assets<Gltf>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut loaded: Local<bool>,
+    asset_server: Res<AssetServer>,
 ) {
     if *loaded {
         return;
@@ -229,7 +233,7 @@ pub fn spawn_monster(
     let floor_cast = RayCaster::new(Vec3::Z * MONSTER_RAY_PRE_LEN, Dir3::NEG_Z)
         .with_max_hits(1)
         .with_query_filter(SpatialQueryFilter {
-            mask: LayerMask::NONE | PLAYER_FLOOR_LAYER,
+            mask: LayerMask::ALL,
             excluded_entities: Default::default(),
         });
 
@@ -247,5 +251,10 @@ pub fn spawn_monster(
         LinearVelocity::from(Vec3::new(0.0, 5.0, 1.0)),
         Transform::from_xyz(20.0, 3.0, 30.0),
         Visibility::default(),
+        AudioPlayer::new(asset_server.load("whimper.wav")),
+        PlaybackSettings::LOOP
+            .with_spatial(true)
+            .with_spatial_scale(SpatialScale::new(0.07))
+            .with_volume(bevy::audio::Volume::Linear(0.2)),
     ));
 }

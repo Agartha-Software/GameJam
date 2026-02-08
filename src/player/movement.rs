@@ -1,5 +1,5 @@
 use avian3d::{math::PI, prelude::*};
-use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
+use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*, window::CursorOptions};
 
 use crate::{
     player::{Player, PlayerCamera},
@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// Acceleration in m/s^2
-pub const PLAYER_ACCELERATION: f32 = 160.0 / 3.6;
+pub const PLAYER_ACCELERATION: f32 = 220.0 / 3.6;
 
 /// Velocity in m/s calculated from km/h
 pub const PLAYER_MAX_SPEED: f32 = 2.9 / 3.6;
@@ -15,7 +15,7 @@ pub const PLAYER_MAX_SPEED: f32 = 2.9 / 3.6;
 pub const PLAYER_MAX_SPEED_2: f32 = PLAYER_MAX_SPEED * PLAYER_MAX_SPEED;
 
 // Effective gravity in m/s^2 in Z
-pub const PLAYER_BUOYANCY: f32 = -10.;
+pub const PLAYER_BUOYANCY: f32 = -20.;
 
 // Jump velocity
 pub const PLAYER_JUMP_IMPULSE: f32 = 0.4;
@@ -129,6 +129,7 @@ pub fn move_op(
 }
 
 pub fn move_player(
+    cursor_options: Single<&CursorOptions>,
     time: Res<Time>,
     inputs: Res<ButtonInput<KeyCode>>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
@@ -144,12 +145,14 @@ pub fn move_player(
 
     player_transform.translation += velocity.0 * time.delta_secs();
 
-    move_player_camera(
-        &accumulated_mouse_motion.delta,
-        &mut player_transform,
-        &mut camera_transform,
-        settings.camera_sensitivity,
-    );
+    if cursor_options.visible == false {
+        move_player_camera(
+            &accumulated_mouse_motion.delta,
+            &mut player_transform,
+            &mut camera_transform,
+            settings.camera_sensitivity,
+        );
+    }
 
     let mut wishdir = get_wishdir(&inputs, &settings.inputs);
 
