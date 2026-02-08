@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::color::palettes::tailwind;
+use bevy::anti_alias::fxaa::Fxaa;
 use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::post_process::bloom::Bloom;
@@ -15,14 +15,7 @@ use crate::player::flashlight::Flashlight;
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
 use crate::player::{PLAYER_FLOOR_LAYER, Player, PlayerCamera, WorldModelCamera};
 
-pub fn spawn_player(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let arm = meshes.add(Cuboid::new(0.1, 0.1, 0.5));
-    let arm_material = materials.add(Color::from(tailwind::ORANGE_950));
-
+pub fn spawn_player(mut commands: Commands) {
     let camera = commands
         .spawn((
             PlayerCamera,
@@ -36,9 +29,11 @@ pub fn spawn_player(
                     Camera::default(),
                     Projection::from(PerspectiveProjection {
                         fov: 80.0_f32.to_radians(),
-                        far: 2000.0,
+                        far: 1500.0,
                         ..default()
                     }),
+                    Msaa::Off,
+                    Fxaa::default(),
                     Bloom::OLD_SCHOOL,
                     ChromaticAberration {
                         intensity: 0.02,

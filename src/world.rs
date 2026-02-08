@@ -104,7 +104,7 @@ fn spawn_world(
         Sprite3d {
             pixels_per_metre: 400.,
             alpha_mode: AlphaMode::Blend,
-            unlit: true,
+            unlit: false,
             // pivot: Some(Vec2::new(0.5, 0.5)),
             ..default()
         },
@@ -120,7 +120,7 @@ fn spawn_world(
             Sprite3d {
                 pixels_per_metre: 400.,
                 alpha_mode: AlphaMode::Blend,
-                unlit: true,
+                unlit: false,
                 // pivot: Some(Vec2::new(0.5, 0.5)),
                 ..default()
             },
@@ -163,19 +163,19 @@ fn spawn_world(
         Mesh3d(light_mesh.clone()),
         MeshMaterial3d(materials.add(light_mat.clone())),
         NotShadowCaster,
-        Transform::from_xyz(-62.0, -89.0, 493.0).with_scale(Vec3::splat(0.5)),
+        Transform::from_xyz(-62.0, -89.0, 493.0).with_scale(Vec3::splat(2.)),
     ));
     commands.spawn((
         Mesh3d(light_mesh.clone()),
         MeshMaterial3d(materials.add(light_mat.clone())),
         NotShadowCaster,
-        Transform::from_xyz(-59.0, -78.0, 493.0).with_scale(Vec3::splat(0.5)),
+        Transform::from_xyz(-59.0, -78.0, 493.0).with_scale(Vec3::splat(2.)),
     ));
     commands.spawn((
         Mesh3d(light_mesh),
         MeshMaterial3d(materials.add(light_mat)),
         NotShadowCaster,
-        Transform::from_xyz(-65.0, -78.0, 493.0).with_scale(Vec3::splat(0.5)),
+        Transform::from_xyz(-65.0, -78.0, 493.0).with_scale(Vec3::splat(2.)),
     ));
 }
 
