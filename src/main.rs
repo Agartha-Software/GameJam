@@ -36,8 +36,8 @@ fn main() {
                 }),
             AspectRatioPlugin {
                 resolution: Resolution {
-                    width: 16.0,
-                    height: 9.0,
+                    width: 1600.0,
+                    height: 900.0,
                 },
                 mask: AspectRatioMask {
                     color: Color::BLACK,
