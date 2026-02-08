@@ -1,10 +1,11 @@
 use std::ops::{Add, Sub};
 
+use avian3d::prelude::RayHits;
 use bevy::prelude::*;
 
 use crate::{
     marker::MarkerAssets,
-    player::{Player, PlayerAction, PlayerCamera, flashlight, marker::Pickup},
+    player::{Player, PlayerAction, PlayerCamera, marker::Pickup},
     speaker::{Speaker, SpeakerMode, SpeakerResource, grab, ungrab},
     ui,
 };
@@ -33,72 +34,129 @@ pub fn player_place_marker(
 
 pub fn player_action(
     mut commands: Commands,
-    player: Single<(Entity, &GlobalTransform, &mut Player)>,
+    time: Res<Time>,
+    player: Single<
+        (
+            Entity,
+            &GlobalTransform,
+            &mut Transform,
+            &mut Player,
+            &RayHits,
+        ),
+        (Without<PlayerCamera>, Without<Pickup>),
+    >,
     speaker: Single<&GlobalTransform, With<Speaker>>,
     speaker_resource: Res<SpeakerResource>,
     input: Res<ButtonInput<MouseButton>>,
     marker_assets: Res<MarkerAssets>,
 
     mut cursor_icon: Single<&mut Visibility, With<ui::Cursor>>,
-    // mut player: Single<(Entity, &mut Player), Without<PlayerCamera>>,
-    camera: Single<(Entity, &GlobalTransform), (With<PlayerCamera>, Without<Player>)>,
-    mut pickups: Query<(Entity, &GlobalTransform, &mut Transform), With<Pickup>>,
+    camera: Single<
+        (Entity, &GlobalTransform, &mut Transform),
+        (With<PlayerCamera>, Without<Pickup>, Without<Player>),
+    >,
+    mut pickups: Query<
+        (Entity, &GlobalTransform, &mut Transform),
+        (With<Pickup>, Without<Player>, Without<PlayerCamera>),
+    >,
+    entities: Query<
+        (Entity, &GlobalTransform),
+        (Without<Player>, Without<PlayerCamera>, Without<Pickup>),
+    >,
 ) {
-    let (player_entity, player_tm, mut player) = player.into_inner();
+    let (player_entity, player_global, mut player_tm, mut player, player_hits) = player.into_inner();
 
-    let (camera_entity, camera_tm) = camera.into_inner();
+    let (camera_entity, camera_global, mut camera_tm) = camera.into_inner();
 
     let lmb = input.just_pressed(MouseButton::Left);
 
-    match player.action {
+    let next_action = match &player.action {
         PlayerAction::None => {
             let pointed = pickups.iter_mut().find(|(_, global, _)| {
-                camera_tm.translation().sub(global.translation()).length() < 2.0
+                camera_global
+                    .translation()
+                    .sub(global.translation())
+                    .length()
+                    < 2.0
                     && global
                         .translation()
                         .add(Vec3::new(0., 0., 0.5))
-                        .sub(camera_tm.translation())
+                        .sub(camera_global.translation())
                         .normalize()
-                        .dot(*camera_tm.forward())
+                        .dot(*camera_global.forward())
                         > 0.8
             });
             if let Some((entity, _, mut tm)) = pointed {
-                **cursor_icon = Visibility::Visible;
-
                 if lmb {
-                    player.action = PlayerAction::HoldingSpeaker(entity.clone());
                     grab(&mut commands, entity, &mut tm, camera_entity);
+                    **cursor_icon = Visibility::Hidden;
+                    Some(PlayerAction::HoldingSpeaker(entity.clone()))
+                } else {
+                    **cursor_icon = Visibility::Visible;
+                    None
                 }
             } else {
                 **cursor_icon = Visibility::Hidden;
 
                 if let SpeakerMode::Ready(node) = &speaker_resource.mode {
-                    if player_tm
+                    if player_global
                         .translation()
                         .distance_squared(speaker.translation())
                         < PLAYER_SPEAKER_PLACE_DIST_2
                         && player.action == PlayerAction::None
                         && input.just_pressed(MouseButton::Left)
+                        && !player_hits.is_empty()
                     {
                         player_place_marker(
                             &mut commands,
                             node.clone(),
-                            &player_tm,
+                            &player_global,
                             &marker_assets.model,
                         );
                     }
                 } else {
                 }
+                None
             }
         }
         PlayerAction::HoldingSpeaker(entity) => {
             if lmb {
-                player.action = PlayerAction::None;
-                if let Ok((_, _global, mut tm)) = pickups.get_mut(entity) {
-                    ungrab(&mut commands, entity, &mut tm, &player_tm, camera_entity);
+                if let Ok((_, _global, mut tm)) = pickups.get_mut(entity.clone()) {
+                    ungrab(
+                        &mut commands,
+                        entity.clone(),
+                        &mut tm,
+                        &player_global,
+                        camera_entity,
+                    );
                 }
+                Some(PlayerAction::None)
+            } else {
+                None
             }
         }
-        PlayerAction::Dead => {}
+        PlayerAction::Dying(timeout, e) => {
+            if timeout.gt(&1.0) {
+                Some(PlayerAction::Dead)
+            } else {
+                if let Ok((_, global)) = entities.get(e.entity()) {
+                    let dxy = (global.translation() - player_global.translation()).xy();
+                    let z = dxy.angle_to(player_global.up().xy());
+
+                    let dz = (global.translation() - camera_global.translation()).z;
+
+                    let x = (dz / dxy.length()).atan();
+
+                    player_tm.rotation *= Quat::from_rotation_z(-z);
+                    camera_tm.rotation = Quat::from_rotation_x(90f32.to_radians() + x);
+                }
+
+                Some(PlayerAction::Dying(timeout + time.delta_secs(), e.clone()))
+            }
+        }
+        _ => None,
     };
+    if let Some(next_action) = next_action {
+        player.action = next_action;
+    }
 }

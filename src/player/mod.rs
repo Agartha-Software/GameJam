@@ -18,6 +18,7 @@ pub enum PlayerAction {
     None,
     HoldingSpeaker(Entity),
     // PlacingMarker,
+    Dying(f32, Entity),
     Dead,
 }
 
