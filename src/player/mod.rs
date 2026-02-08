@@ -6,7 +6,7 @@ pub mod spawn;
 
 use bevy::prelude::*;
 
-use crate::player::action::player_action;
+use crate::player::action::{player_action, player_ladder};
 use crate::player::flashlight::control_flashlight;
 use crate::player::marker::MarkerPlugin;
 use crate::player::movement::move_player;

@@ -68,8 +68,42 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud
                 ..Default::default()
             },
         ));
+        parent.spawn((
+            Node {
+                justify_self: JustifySelf::Center,
+                align_self: AlignSelf::Center,
+                left: Val::Vw(30.0),
+                width: Val::Vw(20.0),
+                height: Val::Vh(7.0),
+                position_type: PositionType::Absolute,
+                ..Default::default()
+            },
+            InvalidText,
+            Visibility::Hidden,
+            Text2d::new("The company isn't proud yet, unmarked oil sources remains..."),
+        ));
+        parent.spawn((
+            Node {
+                justify_self: JustifySelf::Center,
+                align_self: AlignSelf::Center,
+                left: Val::Vw(30.0),
+                width: Val::Vw(20.0),
+                height: Val::Vh(7.0),
+                position_type: PositionType::Absolute,
+                ..Default::default()
+            },
+            Visibility::Hidden,
+            ValidText,
+            Text2d::new("You did a great job! You might even get a raise."),
+        ));
     });
 }
+
+#[derive(Component)]
+struct ValidText;
+
+#[derive(Component)]
+struct InvalidText;
 
 fn move_overlay(
     overlay: Single<(&mut Node, &mut OverlayImage), With<OverlayImage>>,

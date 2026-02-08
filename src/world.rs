@@ -60,7 +60,7 @@ fn load_ground_gltf(mut commands: Commands, assets: Res<AssetServer>) {
 }
 
 #[derive(Resource, Default)]
-struct Ladder(Handle<Image>);
+pub struct Ladder(Handle<Image>);
 
 fn load_ladder(asset_server: Res<AssetServer>, mut ladder: ResMut<Ladder>) {
     ladder.0 = asset_server.load("ladder.png");
@@ -72,6 +72,9 @@ fn play_background_audio(asset_server: Res<AssetServer>, mut commands: Commands)
         PlaybackSettings::LOOP.with_volume(bevy::audio::Volume::Linear(0.06)),
     ));
 }
+
+#[derive(Component)]
+pub(crate) struct LadderInteract;
 
 fn spawn_world(
     asset_server: Res<AssetServer>,
@@ -114,6 +117,7 @@ fn spawn_world(
             ..default()
         },
         Visibility::Visible,
+        LadderInteract,
         Transform::from_xyz(0., 0., 0.),
     ));
     for i in 1..72 {

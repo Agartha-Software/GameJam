@@ -7,7 +7,7 @@ mod player;
 mod settings;
 mod speaker;
 mod ui;
-mod world;
+pub mod world;
 
 use avian3d::{PhysicsPlugins, prelude::Gravity};
 use bevy::prelude::*;
@@ -28,8 +28,8 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        title: "550fathom".into(),
-                        name: Some("550fathom".into()),
+                        title: "550fathoms".into(),
+                        name: Some("550fathoms".into()),
                         ..default()
                     }),
                     ..default()
