@@ -2,14 +2,18 @@ use std::ops::{Add, Sub};
 
 use bevy::prelude::*;
 
-use crate::{player::PlayerCamera, ui::Cursor};
+use crate::{
+    player::{Player, PlayerAction, PlayerCamera},
+    speaker::grab,
+    ui::Cursor,
+};
 
 pub struct MarkerPlugin;
 
 impl Plugin for MarkerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_marker_gltf)
-            .add_systems(Update, (spawn_marker, grab_pickup));
+        app.add_systems(Startup, load_marker_gltf);
+        // .add_systems(Update, (spawn_marker, grab_pickup));
     }
 }
 
@@ -19,33 +23,15 @@ pub struct MarkerAssets {
     pub material_light: Handle<StandardMaterial>,
 }
 
-fn grab_pickup(
-    mut cursor_icon: Single<&mut Visibility, With<Cursor>>,
-    camera: Single<&GlobalTransform, With<PlayerCamera>>,
-    spawned_pickup: Query<&GlobalTransform, With<Pickup>>,
-) {
-    let mut visible = false;
+// fn grab_pickup(
+//     mut commands: Commands,
+//     mut cursor_icon: Single<&mut Visibility, With<Cursor>>,
+//     mut player: Single<(Entity, &mut Player), Without<PlayerCamera>>,
+//     camera: Single<&GlobalTransform, (With<PlayerCamera>, Without<Player>)>,
+//     mut pickups: Query<(Entity, &GlobalTransform, &mut Transform), With<Pickup>>,
+// ) {
 
-    for pickup in spawned_pickup {
-        if camera.translation().sub(pickup.translation()).length() < 2.0
-            && pickup
-                .translation()
-                .add(Vec3::new(0., 0., 0.5))
-                .sub(camera.translation())
-                .normalize()
-                .dot(*camera.forward())
-                > 0.8
-        {
-            visible = true;
-        }
-    }
-
-    if visible {
-        **cursor_icon = Visibility::Visible;
-    } else {
-        **cursor_icon = Visibility::Hidden;
-    }
-}
+// }
 
 pub fn load_marker_gltf(
     mut commands: Commands,
@@ -66,7 +52,7 @@ pub fn load_marker_gltf(
 }
 
 #[derive(Component)]
-struct Pickup;
+pub struct Pickup;
 
 pub fn spawn_marker(
     mut commands: Commands,

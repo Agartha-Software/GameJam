@@ -11,8 +11,8 @@ pub struct OilNodeResource {
 pub fn spawn_world_nodes(mut commands: Commands) {
     commands.spawn_batch([
         (OilNode, Transform::from_xyz(-62.0, -81.0, 22.0)),
-        (OilNode, Transform::from_xyz(0.0, 0.0, 0.0)),
-        (OilNode, Transform::from_xyz(0.0, 0.0, 0.0)),
-        (OilNode, Transform::from_xyz(0.0, 0.0, 0.0)),
+        (OilNode, Transform::from_xyz(-42.0, -81.0, 22.0)),
+        (OilNode, Transform::from_xyz(-42.0, -61.0, 22.0)),
+        (OilNode, Transform::from_xyz(0.0, 0.0, 22.0)),
     ]);
 }

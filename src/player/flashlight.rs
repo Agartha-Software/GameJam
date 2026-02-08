@@ -6,13 +6,13 @@ use crate::{player::WorldModelCamera, ui::Cursor};
 pub struct Flashlight;
 
 pub fn control_flashlight(
-    mouse: Res<ButtonInput<MouseButton>>,
+    mouse: Res<ButtonInput<KeyCode>>,
     mut cam: Single<&mut DistanceFog, With<WorldModelCamera>>,
 
     mut flashlight: Single<&mut Visibility, With<Flashlight>>,
     mut hand_ui: Single<&mut ImageNode, With<Cursor>>,
 ) {
-    if mouse.just_pressed(MouseButton::Left) {
+    if mouse.just_pressed(KeyCode::KeyF) {
         if **flashlight == Visibility::Hidden {
             **flashlight = Visibility::Visible;
             cam.falloff = FogFalloff::Exponential { density: 0.2 };
