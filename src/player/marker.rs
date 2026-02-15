@@ -1,7 +1,7 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::player::Player;
+use crate::player::{Player, PlayerCamera};
 
 pub struct MarkerPlugin;
 
@@ -30,10 +30,9 @@ fn place_markers(
     marker_assets: Res<MarkerAssets>,
     gltf: Res<Assets<Gltf>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    player: Single<(&GlobalTransform, &RayHits), With<Player>>,
+    spatial_query: SpatialQuery,
+    cam: Single<&GlobalTransform, With<PlayerCamera>>,
 ) {
-    let (player_transform, _) = player.into_inner();
-
     for PlaceMarker { oil } in reader.read() {
         let Some(gltf) = gltf.get(&marker_assets.model) else {
             return;
@@ -48,26 +47,34 @@ fn place_markers(
             .unwrap()
             .clone();
 
-        let origin = player_transform.transform_point((0.0, 0.5, 0.0).into());
+        if let Some(hits) = spatial_query.cast_ray(
+            cam.translation(),
+            cam.forward(),
+            3.0,
+            false,
+            &SpatialQueryFilter::default(),
+        ) {
+            commands.entity(*oil).despawn();
 
-        commands.entity(*oil).despawn();
+            let pos = cam.translation() + hits.distance * cam.forward();
 
-        commands
-            .spawn((
-                SceneRoot(gltf.scenes[0].clone()),
-                Transform::from_translation(origin),
-                Visibility::default(),
-            ))
-            .with_children(|parent| {
-                parent.spawn((
-                    PointLight {
-                        color: Color::srgb(1., 0.5, 0.5),
-                        intensity: 5000.0,
-                        ..Default::default()
-                    },
-                    Transform::from_xyz(0.0, 0.0, 0.8),
-                ));
-            });
+            commands
+                .spawn((
+                    SceneRoot(gltf.scenes[0].clone()),
+                    Transform::from_translation(pos),
+                    Visibility::default(),
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        PointLight {
+                            color: Color::srgb(1., 0.5, 0.5),
+                            intensity: 5000.0,
+                            ..Default::default()
+                        },
+                        Transform::from_xyz(0.0, 0.0, 0.8),
+                    ));
+                });
+        }
     }
 }
 
