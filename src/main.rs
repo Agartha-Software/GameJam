@@ -1,4 +1,5 @@
 mod debug;
+mod ladder;
 mod monster;
 mod node;
 mod particle;
@@ -15,8 +16,8 @@ use bevy_atmosphere::plugin::AtmospherePlugin;
 use particle::ParticlePlugin;
 
 use crate::{
-    debug::DebugPlugin, monster::MonsterPlugin, player::PlayerPlugin, settings::Settings,
-    speaker::SpeakerPlugin, ui::UiPlugin, world::WorldPlugin,
+    debug::DebugPlugin, ladder::LadderPlugin, monster::MonsterPlugin, player::PlayerPlugin,
+    settings::Settings, speaker::SpeakerPlugin, ui::UiPlugin, world::WorldPlugin,
 };
 
 fn main() {
@@ -51,6 +52,7 @@ fn main() {
             PlayerPlugin,
             MonsterPlugin,
             SpeakerPlugin,
+            LadderPlugin,
         ))
         .insert_resource(Gravity(Vec3::NEG_Z * 0.3))
         .run();
