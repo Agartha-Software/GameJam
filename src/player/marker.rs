@@ -1,7 +1,7 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::player::{Player, PlayerCamera};
+use crate::player::PlayerCamera;
 
 pub struct MarkerPlugin;
 

@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use bevy::{light::NotShadowCaster, prelude::*};
 use bevy_sprite3d::Sprite3d;
 
