@@ -24,6 +24,7 @@ bevy = { version = "0.18.0", features = [
     "3d",
     "wav",
     "mp3",
+    "bevy_ui_debug",
     "bevy_dev_tools",
 ] }
 bevy_atmosphere = { git = "https://github.com/Arthur-Aillet/bevy_atmosphere", branch = "feat/z-up" }

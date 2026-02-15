@@ -1,6 +1,7 @@
 use avian3d::prelude::{PhysicsDebugPlugin, PhysicsGizmos};
 use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
 use bevy::prelude::*;
+use bevy::ui_render::UiDebugOptions;
 use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
@@ -64,6 +65,7 @@ fn toggle_debug(
     mut image_overlay: Single<&mut Visibility, With<OverlayImage>>,
     mut settings: ResMut<Settings>,
     mut store: ResMut<GizmoConfigStore>,
+    mut debug_ui: ResMut<UiDebugOptions>,
 ) {
     if input.just_pressed(KeyCode::F1) {
         fps_overlay.enabled = !fps_overlay.enabled;
@@ -85,6 +87,7 @@ fn toggle_debug(
     } else {
         **image_overlay = Visibility::Visible;
     }
+    debug_ui.enabled = settings.debug && !settings.debug_display;
 
     let phys_config = store.config_mut::<PhysicsGizmos>().0;
     if settings.debug_display == true {
