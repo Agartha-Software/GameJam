@@ -1,10 +1,8 @@
-use std::process::exit;
-
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    node::{OilAsset, OilNode, OilNodeResource},
+    node::{OilNode, OilNodeResource},
     player::PlayerCamera,
 };
 
@@ -14,10 +12,7 @@ impl Plugin for MarkerPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_message::<TryPlaceMarker>()
             .add_systems(Startup, load_marker_gltf)
-            .add_systems(
-                PostUpdate,
-                place_markers.run_if(|oil: Res<OilAsset>| oil.loaded),
-            );
+            .add_systems(PostUpdate, place_markers);
     }
 }
 
@@ -39,7 +34,7 @@ fn place_markers(
     marker_assets: Res<MarkerAssets>,
     gltf: Res<Assets<Gltf>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut oil_node_res: ResMut<OilNodeResource>,
+    mut oil_node_res: If<ResMut<OilNodeResource>>,
     spatial_query: SpatialQuery,
     cam: Single<&GlobalTransform, With<PlayerCamera>>,
     nodes: Query<(Entity, &GlobalTransform), With<OilNode>>,
@@ -89,10 +84,6 @@ fn place_markers(
                                 Transform::from_xyz(0.0, 0.0, 0.8),
                             ));
                         });
-
-                    if oil_node_res.nodes_left == 0 {
-                        exit(0);
-                    }
                 }
             }
         }
