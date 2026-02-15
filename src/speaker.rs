@@ -20,7 +20,6 @@ use bevy::{
 };
 
 use crate::node::OilNode;
-use crate::player::marker::Pickup;
 
 pub struct SpeakerPlugin;
 
@@ -57,12 +56,15 @@ impl Speaker {
     }
 }
 
+#[derive(Component)]
+pub struct Pickup;
+
 #[derive(Default)]
 pub enum SpeakerMode {
     #[default]
     None,
     Blink(f32),
-    Ready(Entity),
+    Ready,
 }
 
 #[derive(Resource)]
@@ -118,7 +120,7 @@ fn spawn_speaker(
         PlaybackSettings::LOOP
             .with_spatial(true)
             .with_spatial_scale(SpatialScale::new(0.5))
-            .with_volume(bevy::audio::Volume::Linear(0.25)),
+            .with_volume(bevy::audio::Volume::Linear(0.5)),
     ));
 }
 
@@ -151,7 +153,7 @@ pub fn apply_color(speaker_resource: &SpeakerResource, materials: &mut Assets<St
     let color = match speaker_resource.mode {
         SpeakerMode::None => LinearRgba::BLACK,
         SpeakerMode::Blink(blink) => EMIT_RED * blink,
-        SpeakerMode::Ready(_) => EMIT_GREEN,
+        SpeakerMode::Ready => EMIT_GREEN,
     };
 
     let need_change = if let Some(mat_handle) = &speaker_resource.material_blink {
@@ -175,19 +177,19 @@ pub fn apply_color(speaker_resource: &SpeakerResource, materials: &mut Assets<St
 
 pub fn speaker_preupdate(
     time: Res<Time>,
-    nodes: Query<(Entity, &GlobalTransform), With<OilNode>>,
+    nodes: Query<&GlobalTransform, With<OilNode>>,
     speaker: Single<&GlobalTransform, With<Speaker>>,
     mut speaker_resource: ResMut<SpeakerResource>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    speaker_resource.mode = if let Some((e, n, power)) = nodes
+    speaker_resource.mode = if let Some((n, power)) = nodes
         .iter()
-        .map(|(e, n)| (e, n, bias(&speaker, n)))
-        .reduce(|a, b| if a.2 < b.2 { b } else { a })
+        .map(|n| (n, bias(&speaker, n)))
+        .reduce(|a, b| if a.1 < b.1 { b } else { a })
     {
         if n.translation().distance_squared(speaker.translation()) < NODE_SPEAKER_ACTIVATION_DIST_2
         {
-            SpeakerMode::Ready(e)
+            SpeakerMode::Ready
         } else {
             speaker_resource.time += (power * 40.0) * time.delta_secs();
             SpeakerMode::Blink(speaker_resource.time.sin().abs().squared())

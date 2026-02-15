@@ -16,14 +16,13 @@ impl Plugin for WorldPlugin {
                 Startup,
                 (
                     load_ground_gltf,
-                    load_ladder,
                     setup_world,
                     play_background_audio,
                     load_oil,
+                    spawn_world,
                 ),
             )
-            .add_systems(Update, (spawn_ground, spawn_world, spawn_world_nodes))
-            .insert_resource(Ladder::default())
+            .add_systems(Update, (spawn_ground, spawn_world_nodes))
             .insert_resource(OilAsset::default());
     }
 }
@@ -59,82 +58,18 @@ fn load_ground_gltf(mut commands: Commands, assets: Res<AssetServer>) {
     ));
 }
 
-#[derive(Resource, Default)]
-struct Ladder(Handle<Image>);
-
-fn load_ladder(asset_server: Res<AssetServer>, mut ladder: ResMut<Ladder>) {
-    ladder.0 = asset_server.load("ladder.png");
-}
-
 fn play_background_audio(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         AudioPlayer::new(asset_server.load("ambience.wav")),
-        PlaybackSettings::LOOP.with_volume(bevy::audio::Volume::Linear(0.06)),
+        PlaybackSettings::LOOP.with_volume(bevy::audio::Volume::Linear(0.12)),
     ));
 }
 
 fn spawn_world(
-    asset_server: Res<AssetServer>,
-    ladder: Res<Ladder>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
-    mut loaded: Local<bool>,
 ) {
-    if *loaded {
-        return;
-    }
-
-    if !asset_server
-        .get_load_state(ladder.0.id())
-        .is_some_and(|s| s.is_loaded())
-    {
-        return;
-    }
-
-    *loaded = true;
-
-    let mut ladder_parent = commands.spawn((
-        Visibility::Visible,
-        Transform::from_xyz(-72.0, -85.0, 25.)
-            .looking_to(Vec3::Y, Vec3::Z)
-            .with_scale(Vec3::splat(3.)),
-    ));
-
-    ladder_parent.with_child((
-        Sprite3d {
-            pixels_per_metre: 400.,
-            alpha_mode: AlphaMode::Blend,
-            unlit: false,
-            // pivot: Some(Vec2::new(0.5, 0.5)),
-            ..default()
-        },
-        Sprite {
-            image: ladder.0.clone(),
-            ..default()
-        },
-        Visibility::Visible,
-        Transform::from_xyz(0., 0., 0.),
-    ));
-    for i in 1..72 {
-        ladder_parent.with_child((
-            Sprite3d {
-                pixels_per_metre: 400.,
-                alpha_mode: AlphaMode::Blend,
-                unlit: false,
-                // pivot: Some(Vec2::new(0.5, 0.5)),
-                ..default()
-            },
-            Sprite {
-                image: ladder.0.clone(),
-                ..default()
-            },
-            NotShadowCaster,
-            Visibility::Visible,
-            Transform::from_xyz(0., i as f32 * 2.24, 0.),
-        ));
-    }
-
     commands.spawn((
         Mesh3d(meshes.add(Capsule3d::default().mesh().latitudes(7).longitudes(7))),
         MeshMaterial3d(materials.add(Color::srgb_u8(165, 42, 42))),

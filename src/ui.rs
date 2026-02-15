@@ -51,25 +51,60 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud
             Outline::new(Val::Px(200.0), Val::Px(0.0), Color::BLACK),
             OverlayImage::default(),
         ));
-        parent.spawn((
-            Node {
-                top: Val::Px((900.0 - 70.0) / 2.),
-                left: Val::Px((1600.0 - 70.0) / 2.),
+        parent
+            .spawn((Node {
                 position_type: PositionType::Absolute,
-                width: Val::Px(70.0),
-                height: Val::Px(70.0),
-                ..Default::default()
-            },
-            Visibility::Hidden,
-            Cursor,
-            ImageNode {
-                image: asset_server.load("hand_icon.png"),
-                color: Color::WHITE,
-                ..Default::default()
-            },
-        ));
+                justify_content: JustifyContent::Center,
+                align_content: AlignContent::Center,
+                align_self: AlignSelf::Center,
+                justify_self: JustifySelf::Center,
+                width: Val::Vw(100.0),
+                height: Val::Vh(100.0),
+                ..default()
+            },))
+            .with_children(|centered| {
+                centered.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        align_self: AlignSelf::Center,
+                        justify_self: JustifySelf::Center,
+                        display: Display::None,
+                        ..default()
+                    },
+                    Text::new(""),
+                    TextFont {
+                        font: asset_server.load("VCR_OSD_MONO_1.001.ttf"),
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextLayout::new_with_justify(Justify::Center).with_no_wrap(),
+                    TextColor(Color::WHITE),
+                    CenteredText,
+                ));
+
+                centered.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        align_self: AlignSelf::Center,
+                        justify_self: JustifySelf::Center,
+                        width: Val::Px(70.0),
+                        height: Val::Px(70.0),
+                        ..Default::default()
+                    },
+                    Visibility::Hidden,
+                    Cursor,
+                    ImageNode {
+                        image: asset_server.load("hand_icon.png"),
+                        color: Color::WHITE,
+                        ..Default::default()
+                    },
+                ));
+            });
     });
 }
+
+#[derive(Component)]
+pub struct CenteredText;
 
 fn move_overlay(
     overlay: Single<(&mut Node, &mut OverlayImage), With<OverlayImage>>,

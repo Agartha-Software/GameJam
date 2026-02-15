@@ -1,56 +1,25 @@
-use std::ops::{Add, Sub};
+use std::{
+    ops::{Add, Sub},
+    process::exit,
+};
 
-use avian3d::prelude::RayHits;
-use avian3d::prelude::{RigidBody, RigidBodyDisabled};
 use bevy::prelude::*;
 
 use crate::{
-    marker::MarkerAssets,
-    player::{Player, PlayerAction, PlayerCamera, marker::Pickup},
-    speaker::{Speaker, SpeakerMode, SpeakerResource, grab, ungrab},
+    player::{Player, PlayerAction, PlayerCamera, marker::TryPlaceMarker},
+    speaker::{Pickup, grab, ungrab},
     ui,
 };
-
-/// distance from the speaker in which the player may place a marker
-const PLAYER_SPEAKER_PLACE_DIST: f32 = 4.0;
-/// squared distance for easy compute
-const PLAYER_SPEAKER_PLACE_DIST_2: f32 = PLAYER_SPEAKER_PLACE_DIST * PLAYER_SPEAKER_PLACE_DIST;
-
-pub fn player_place_marker(
-    commands: &mut Commands,
-    node: Entity,
-    player_transform: &GlobalTransform,
-    marker_model: &Handle<Scene>,
-) {
-    let origin = player_transform.transform_point((0.0, 0.5, 0.0).into());
-
-    commands.entity(node).despawn();
-
-    commands.spawn((
-        SceneRoot(marker_model.clone()),
-        Transform::from_translation(origin),
-        Visibility::default(),
-    ));
-}
 
 pub fn player_action(
     mut commands: Commands,
     time: Res<Time>,
     player: Single<
-        (
-            Entity,
-            &GlobalTransform,
-            &mut Transform,
-            &mut Player,
-            &RayHits,
-        ),
+        (&GlobalTransform, &mut Transform, &mut Player),
         (Without<PlayerCamera>, Without<Pickup>),
     >,
-    speaker: Single<&GlobalTransform, With<Speaker>>,
-    speaker_resource: Res<SpeakerResource>,
+    mut place_speaker: MessageWriter<TryPlaceMarker>,
     input: Res<ButtonInput<MouseButton>>,
-    marker_assets: Res<MarkerAssets>,
-
     mut cursor_icon: Single<&mut Visibility, With<ui::Cursor>>,
     camera: Single<
         (Entity, &GlobalTransform, &mut Transform),
@@ -65,7 +34,7 @@ pub fn player_action(
         (Without<Player>, Without<PlayerCamera>, Without<Pickup>),
     >,
 ) {
-    let (player_entity, player_global, mut player_tm, mut player, player_hits) = player.into_inner();
+    let (player_global, mut player_tm, mut player) = player.into_inner();
 
     let (camera_entity, camera_global, mut camera_tm) = camera.into_inner();
 
@@ -99,23 +68,8 @@ pub fn player_action(
             } else {
                 **cursor_icon = Visibility::Hidden;
 
-                if let SpeakerMode::Ready(node) = &speaker_resource.mode {
-                    if player_global
-                        .translation()
-                        .distance_squared(speaker.translation())
-                        < PLAYER_SPEAKER_PLACE_DIST_2
-                        && player.action == PlayerAction::None
-                        && input.just_pressed(MouseButton::Left)
-                        && !player_hits.is_empty()
-                    {
-                        player_place_marker(
-                            &mut commands,
-                            node.clone(),
-                            &player_global,
-                            &marker_assets.model,
-                        );
-                    }
-                } else {
+                if lmb {
+                    place_speaker.write(TryPlaceMarker);
                 }
                 None
             }
@@ -138,6 +92,7 @@ pub fn player_action(
         }
         PlayerAction::Dying(timeout, e) => {
             if timeout.gt(&1.0) {
+                exit(0);
                 Some(PlayerAction::Dead)
             } else {
                 if let Ok((_, global)) = entities.get(e.entity()) {

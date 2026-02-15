@@ -255,6 +255,6 @@ pub fn spawn_monster(
         PlaybackSettings::LOOP
             .with_spatial(true)
             .with_spatial_scale(SpatialScale::new(0.07))
-            .with_volume(bevy::audio::Volume::Linear(0.2)),
+            .with_volume(bevy::audio::Volume::Linear(0.4)),
     ));
 }

@@ -1,14 +1,12 @@
 use bevy::prelude::*;
 
-use crate::{player::WorldModelCamera, ui::Cursor};
+use crate::ui::Cursor;
 
 #[derive(Component)]
 pub struct Flashlight;
 
 pub fn control_flashlight(
     mouse: Res<ButtonInput<KeyCode>>,
-    mut cam: Single<&mut DistanceFog, With<WorldModelCamera>>,
-
     mut flashlight: Single<&mut Visibility, With<Flashlight>>,
     mut hand_ui: Single<&mut ImageNode, With<Cursor>>,
 ) {
