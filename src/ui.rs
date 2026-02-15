@@ -51,59 +51,56 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud
             Outline::new(Val::Px(200.0), Val::Px(0.0), Color::BLACK),
             OverlayImage::default(),
         ));
-        parent.spawn((
-            Node {
-                top: Val::Px((900.0 - 70.0) / 2.),
-                left: Val::Px((1600.0 - 70.0) / 2.),
+        parent
+            .spawn((Node {
                 position_type: PositionType::Absolute,
-                width: Val::Px(70.0),
-                height: Val::Px(70.0),
-                ..Default::default()
-            },
-            Visibility::Hidden,
-            Cursor,
-            ImageNode {
-                image: asset_server.load("hand_icon.png"),
-                color: Color::WHITE,
-                ..Default::default()
-            },
-        ));
-        parent.spawn((
-            Node {
-                justify_self: JustifySelf::Center,
+                justify_content: JustifyContent::Center,
+                align_content: AlignContent::Center,
                 align_self: AlignSelf::Center,
-                left: Val::Vw(30.0),
-                width: Val::Vw(20.0),
-                height: Val::Vh(7.0),
-                position_type: PositionType::Absolute,
-                ..Default::default()
-            },
-            InvalidText,
-            Visibility::Hidden,
-            Text2d::new("The company isn't proud yet, unmarked oil sources remains..."),
-        ));
-        parent.spawn((
-            Node {
                 justify_self: JustifySelf::Center,
-                align_self: AlignSelf::Center,
-                left: Val::Vw(30.0),
-                width: Val::Vw(20.0),
-                height: Val::Vh(7.0),
-                position_type: PositionType::Absolute,
-                ..Default::default()
-            },
-            Visibility::Hidden,
-            ValidText,
-            Text2d::new("You did a great job! You might even get a raise."),
-        ));
+                width: Val::Vw(100.0),
+                height: Val::Vh(100.0),
+                ..default()
+            },))
+            .with_children(|centered| {
+                centered.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        align_self: AlignSelf::Center,
+                        justify_self: JustifySelf::Center,
+                        display: Display::None,
+                        ..default()
+                    },
+                    Text::new("-"),
+                    TextFont::from_font_size(12.0),
+                    TextLayout::new_with_justify(Justify::Center).with_no_wrap(),
+                    TextColor(Color::WHITE),
+                    CenteredText,
+                ));
+
+                centered.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        align_self: AlignSelf::Center,
+                        justify_self: JustifySelf::Center,
+                        width: Val::Px(70.0),
+                        height: Val::Px(70.0),
+                        ..Default::default()
+                    },
+                    Visibility::Hidden,
+                    Cursor,
+                    ImageNode {
+                        image: asset_server.load("hand_icon.png"),
+                        color: Color::WHITE,
+                        ..Default::default()
+                    },
+                ));
+            });
     });
 }
 
 #[derive(Component)]
-struct ValidText;
-
-#[derive(Component)]
-struct InvalidText;
+pub struct CenteredText;
 
 fn move_overlay(
     overlay: Single<(&mut Node, &mut OverlayImage), With<OverlayImage>>,
