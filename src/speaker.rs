@@ -118,7 +118,7 @@ fn spawn_speaker(
         PlaybackSettings::LOOP
             .with_spatial(true)
             .with_spatial_scale(SpatialScale::new(0.5))
-            .with_volume(bevy::audio::Volume::Linear(0.25)),
+            .with_volume(bevy::audio::Volume::Linear(0.5)),
     ));
 }
 

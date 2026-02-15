@@ -1,31 +1,49 @@
-use bevy::{
-    app::{Plugin, Startup},
-    asset::{AssetServer, Handle},
-    ecs::{
-        component::Component,
-        resource::Resource,
-        system::{Commands, Res},
-    },
-    gltf::GltfAssetLabel,
-    scene::Scene,
-};
+use avian3d::prelude::*;
+use bevy::prelude::*;
+
+use crate::player::Player;
 
 pub struct MarkerPlugin;
 
 impl Plugin for MarkerPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app.add_systems(Startup, load_marker_gltf);
-        // .add_systems(Update, spawn_marker);
+        app.add_message::<PlaceMarker>()
+            .add_systems(Startup, load_marker_gltf)
+            .add_systems(PostUpdate, place_markers);
     }
 }
 
-#[derive(Component)]
-pub struct Marker;
-
 #[derive(Resource)]
-pub struct MarkerAssets {
+struct MarkerAssets {
     pub model: Handle<Scene>,
     // pub material_blink: Option<Handle<StandardMaterial>>,
+}
+
+#[derive(Message)]
+pub struct PlaceMarker {
+    pub oil: Entity,
+}
+
+fn place_markers(
+    mut reader: MessageReader<PlaceMarker>,
+    mut commands: Commands,
+    marker_assets: Res<MarkerAssets>,
+    player: Single<(&GlobalTransform, &RayHits), With<Player>>,
+) {
+    let (player_transform, _) = player.into_inner();
+
+    for PlaceMarker { oil } in reader.read() {
+        println!("Message received!");
+        let origin = player_transform.transform_point((0.0, 0.5, 0.0).into());
+
+        commands.entity(*oil).despawn();
+
+        commands.spawn((
+            SceneRoot(marker_assets.model.clone()),
+            Transform::from_translation(origin),
+            Visibility::default(),
+        ));
+    }
 }
 
 fn load_marker_gltf(mut commands: Commands, assets: Res<AssetServer>) {

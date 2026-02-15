@@ -7,7 +7,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    marker::MarkerAssets,
+    marker::PlaceMarker,
     player::{Player, PlayerAction, PlayerCamera, marker::Pickup},
     speaker::{Speaker, SpeakerMode, SpeakerResource, grab, ungrab},
     ui,
@@ -18,23 +18,6 @@ const PLAYER_SPEAKER_PLACE_DIST: f32 = 4.0;
 /// squared distance for easy compute
 const PLAYER_SPEAKER_PLACE_DIST_2: f32 = PLAYER_SPEAKER_PLACE_DIST * PLAYER_SPEAKER_PLACE_DIST;
 
-pub fn player_place_marker(
-    commands: &mut Commands,
-    node: Entity,
-    player_transform: &GlobalTransform,
-    marker_model: &Handle<Scene>,
-) {
-    let origin = player_transform.transform_point((0.0, 0.5, 0.0).into());
-
-    commands.entity(node).despawn();
-
-    commands.spawn((
-        SceneRoot(marker_model.clone()),
-        Transform::from_translation(origin),
-        Visibility::default(),
-    ));
-}
-
 #[derive(Resource, Default)]
 pub struct Placed(u32);
 
@@ -42,20 +25,13 @@ pub fn player_action(
     mut commands: Commands,
     time: Res<Time>,
     player: Single<
-        (
-            Entity,
-            &GlobalTransform,
-            &mut Transform,
-            &mut Player,
-            &RayHits,
-        ),
+        (&GlobalTransform, &mut Transform, &mut Player, &RayHits),
         (Without<PlayerCamera>, Without<Pickup>),
     >,
+    mut place_speaker: MessageWriter<PlaceMarker>,
     speaker: Single<&GlobalTransform, With<Speaker>>,
     speaker_resource: Res<SpeakerResource>,
     input: Res<ButtonInput<MouseButton>>,
-    marker_assets: Res<MarkerAssets>,
-
     mut cursor_icon: Single<&mut Visibility, With<ui::Cursor>>,
     camera: Single<
         (Entity, &GlobalTransform, &mut Transform),
@@ -71,8 +47,7 @@ pub fn player_action(
     >,
     mut placed: Local<Placed>,
 ) {
-    let (player_entity, player_global, mut player_tm, mut player, player_hits) =
-        player.into_inner();
+    let (player_global, mut player_tm, mut player, player_hits) = player.into_inner();
 
     let (camera_entity, camera_global, mut camera_tm) = camera.into_inner();
 
@@ -119,12 +94,8 @@ pub fn player_action(
                         if placed.0 == 4 {
                             exit(0);
                         }
-                        player_place_marker(
-                            &mut commands,
-                            node.clone(),
-                            &player_global,
-                            &marker_assets.model,
-                        );
+                        println!("Message sent!");
+                        place_speaker.write(PlaceMarker { oil: *node });
                     }
                 } else {
                 }
