@@ -3,33 +3,22 @@ use std::{
     process::exit,
 };
 
-use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    player::{Player, PlayerAction, PlayerCamera, marker::PlaceMarker},
-    speaker::{Pickup, Speaker, SpeakerMode, SpeakerResource, grab, ungrab},
+    player::{Player, PlayerAction, PlayerCamera, marker::TryPlaceMarker},
+    speaker::{Pickup, grab, ungrab},
     ui,
 };
-
-/// distance from the speaker in which the player may place a marker
-const PLAYER_SPEAKER_PLACE_DIST: f32 = 4.0;
-/// squared distance for easy compute
-const PLAYER_SPEAKER_PLACE_DIST_2: f32 = PLAYER_SPEAKER_PLACE_DIST * PLAYER_SPEAKER_PLACE_DIST;
-
-#[derive(Resource, Default)]
-pub struct Placed(u32);
 
 pub fn player_action(
     mut commands: Commands,
     time: Res<Time>,
     player: Single<
-        (&GlobalTransform, &mut Transform, &mut Player, &RayHits),
+        (&GlobalTransform, &mut Transform, &mut Player),
         (Without<PlayerCamera>, Without<Pickup>),
     >,
-    mut place_speaker: MessageWriter<PlaceMarker>,
-    speaker: Single<&GlobalTransform, With<Speaker>>,
-    speaker_resource: Res<SpeakerResource>,
+    mut place_speaker: MessageWriter<TryPlaceMarker>,
     input: Res<ButtonInput<MouseButton>>,
     mut cursor_icon: Single<&mut Visibility, With<ui::Cursor>>,
     camera: Single<
@@ -44,9 +33,8 @@ pub fn player_action(
         (Entity, &GlobalTransform),
         (Without<Player>, Without<PlayerCamera>, Without<Pickup>),
     >,
-    mut placed: Local<Placed>,
 ) {
-    let (player_global, mut player_tm, mut player, player_hits) = player.into_inner();
+    let (player_global, mut player_tm, mut player) = player.into_inner();
 
     let (camera_entity, camera_global, mut camera_tm) = camera.into_inner();
 
@@ -80,23 +68,8 @@ pub fn player_action(
             } else {
                 **cursor_icon = Visibility::Hidden;
 
-                if let SpeakerMode::Ready(node) = &speaker_resource.mode {
-                    if player_global
-                        .translation()
-                        .distance_squared(speaker.translation())
-                        < PLAYER_SPEAKER_PLACE_DIST_2
-                        && player.action == PlayerAction::None
-                        && input.just_pressed(MouseButton::Left)
-                        && !player_hits.is_empty()
-                    {
-                        placed.0 += 1;
-                        if placed.0 == 4 {
-                            exit(0);
-                        }
-                        println!("Message sent!");
-                        place_speaker.write(PlaceMarker { oil: *node });
-                    }
-                } else {
+                if lmb {
+                    place_speaker.write(TryPlaceMarker);
                 }
                 None
             }
