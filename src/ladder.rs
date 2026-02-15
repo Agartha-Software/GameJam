@@ -44,7 +44,7 @@ pub fn game_state(
 
     let (mut node, mut text) = text.into_inner();
 
-    if oil_res.nodes_left <= 3 && game_state.current_step == Step::LocateOil {
+    if oil_res.nodes_left <= 0 && game_state.current_step == Step::LocateOil {
         game_state.current_step = Step::Exit;
         game_state.since_last_change = Timer::from_seconds(10.0, TimerMode::Once);
 

@@ -71,8 +71,12 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud
                         display: Display::None,
                         ..default()
                     },
-                    Text::new("-"),
-                    TextFont::from_font_size(12.0),
+                    Text::new(""),
+                    TextFont {
+                        font: asset_server.load("VCR_OSD_MONO_1.001.ttf"),
+                        font_size: 16.0,
+                        ..default()
+                    },
                     TextLayout::new_with_justify(Justify::Center).with_no_wrap(),
                     TextColor(Color::WHITE),
                     CenteredText,
