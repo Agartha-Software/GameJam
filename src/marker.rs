@@ -15,8 +15,8 @@ impl Plugin for MarkerPlugin {
 
 #[derive(Resource)]
 struct MarkerAssets {
-    pub model: Handle<Scene>,
-    // pub material_blink: Option<Handle<StandardMaterial>>,
+    pub model: Handle<Gltf>,
+    pub material_light: Handle<StandardMaterial>,
 }
 
 #[derive(Message)]
@@ -28,66 +28,63 @@ fn place_markers(
     mut reader: MessageReader<PlaceMarker>,
     mut commands: Commands,
     marker_assets: Res<MarkerAssets>,
+    gltf: Res<Assets<Gltf>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     player: Single<(&GlobalTransform, &RayHits), With<Player>>,
 ) {
     let (player_transform, _) = player.into_inner();
 
     for PlaceMarker { oil } in reader.read() {
-        println!("Message received!");
+        let Some(gltf) = gltf.get(&marker_assets.model) else {
+            return;
+        };
+
+        let Some(light) = gltf.named_materials.get("light") else {
+            return;
+        };
+
+        *materials.get_mut(light).unwrap() = materials
+            .get(&marker_assets.material_light)
+            .unwrap()
+            .clone();
+
         let origin = player_transform.transform_point((0.0, 0.5, 0.0).into());
 
         commands.entity(*oil).despawn();
 
-        commands.spawn((
-            SceneRoot(marker_assets.model.clone()),
-            Transform::from_translation(origin),
-            Visibility::default(),
-        ));
+        commands
+            .spawn((
+                SceneRoot(gltf.scenes[0].clone()),
+                Transform::from_translation(origin),
+                Visibility::default(),
+            ))
+            .with_children(|parent| {
+                parent.spawn((
+                    PointLight {
+                        color: Color::srgb(1., 0.5, 0.5),
+                        intensity: 5000.0,
+                        ..Default::default()
+                    },
+                    Transform::from_xyz(0.0, 0.0, 0.8),
+                ));
+            });
     }
 }
 
-fn load_marker_gltf(mut commands: Commands, assets: Res<AssetServer>) {
-    // let model = assets.load::<Gltf>("marker.glb");
+pub fn load_marker_gltf(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    assets: Res<AssetServer>,
+) {
+    let model = assets.load::<Gltf>("marker.glb");
 
-    let model = assets.load::<Scene>(GltfAssetLabel::Scene(0).from_asset("marker.glb"));
+    let mut material_light = StandardMaterial::default();
+    material_light.base_color = Color::linear_rgb(10.0, 3.0, 3.0);
+    material_light.emissive = LinearRgba::rgb(10.0, 3.0, 3.0);
+    let material_light = materials.add(material_light);
 
-    commands.insert_resource(MarkerAssets { model });
+    commands.insert_resource(MarkerAssets {
+        model,
+        material_light,
+    });
 }
-
-// fn spawn_marker(
-//     mut commands: Commands,
-//     gltf: Res<Assets<Gltf>>,
-//     mut Marker_assets: ResMut<MarkerAssets>,
-//     mut materials: ResMut<Assets<StandardMaterial>>,
-//     mut stop: Local<bool>,
-// ) {
-//     if *stop {
-//         return;
-//     }
-
-//     let Some(gltf) = gltf.get(&Marker_assets.model) else {
-//         return;
-//     };
-
-//     let Some(blink) = gltf.named_materials.get("light") else {
-//         return;
-//     };
-
-//     let Some(material) = materials.get_mut(blink) else {
-//         return;
-//     };
-
-//     material.emissive = LinearRgba::rgb(0.0, 4.0, 0.0);
-
-//     Marker_assets.material_blink = Some(blink.clone());
-
-//     *stop = true;
-
-//     commands.spawn((
-//         SceneRoot(gltf.scenes[0].clone()),
-//         Marker::default(),
-//         avian3d::dynamics::prelude::RigidBody::Kinematic,
-//         LinearVelocity::default(),
-//         Transform::from_xyz(-64.0, -81.0, 22.25),
-//     ));
-// }
