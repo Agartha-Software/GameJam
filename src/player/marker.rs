@@ -22,7 +22,7 @@ impl Plugin for MarkerPlugin {
 }
 
 /// distance from the oil node in which the player may place a marker
-const PLAYER_PLACE_DIST: f32 = 8.0;
+pub const PLAYER_PLACE_DIST: f32 = 4.0;
 
 #[derive(Resource)]
 struct MarkerAssets {

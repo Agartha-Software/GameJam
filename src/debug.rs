@@ -4,7 +4,9 @@ use bevy::prelude::*;
 use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
+use crate::node::OilNode;
 use crate::player::WorldModelCamera;
+use crate::player::marker::PLAYER_PLACE_DIST;
 use crate::settings::Settings;
 use crate::ui::OverlayImage;
 
@@ -31,12 +33,28 @@ impl Plugin for DebugPlugin {
         })
         .add_plugins((EguiPlugin::default(), PhysicsDebugPlugin))
         .add_plugins(WorldInspectorPlugin::new().run_if(if_debug_display))
-        .add_systems(Update, toggle_debug);
+        .add_systems(
+            Update,
+            (
+                toggle_debug,
+                display_oil_nodes_debug.run_if(if_debug_display),
+            ),
+        );
     }
 }
 
-pub fn if_debug_display(settings: Res<Settings>) -> bool {
+fn if_debug_display(settings: Res<Settings>) -> bool {
     settings.debug_display
+}
+
+fn display_oil_nodes_debug(mut gizmos: Gizmos, oil_nodes: Query<&GlobalTransform, With<OilNode>>) {
+    for oil_node in oil_nodes {
+        gizmos.sphere(
+            oil_node.translation(),
+            PLAYER_PLACE_DIST,
+            Color::srgb(1., 0.7, 0.7),
+        );
+    }
 }
 
 fn toggle_debug(
