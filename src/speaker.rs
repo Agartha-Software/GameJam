@@ -20,7 +20,6 @@ use bevy::{
 };
 
 use crate::node::OilNode;
-use crate::player::marker::Pickup;
 
 pub struct SpeakerPlugin;
 
@@ -56,6 +55,9 @@ impl Speaker {
         self.volume / (10.0f32.powf(distance.length()))
     }
 }
+
+#[derive(Component)]
+pub struct Pickup;
 
 #[derive(Default)]
 pub enum SpeakerMode {

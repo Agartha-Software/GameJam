@@ -1,35 +1,75 @@
+use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{
-    player::{Player, PlayerAction, PlayerCamera},
-    speaker::grab,
-    ui::Cursor,
-};
+use crate::player::Player;
 
 pub struct MarkerPlugin;
 
 impl Plugin for MarkerPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_marker_gltf);
-        // .add_systems(Update, (spawn_marker, grab_pickup));
+    fn build(&self, app: &mut bevy::app::App) {
+        app.add_message::<PlaceMarker>()
+            .add_systems(Startup, load_marker_gltf)
+            .add_systems(PostUpdate, place_markers);
     }
 }
 
 #[derive(Resource)]
-pub struct MarkerAssets {
+struct MarkerAssets {
     pub model: Handle<Gltf>,
     pub material_light: Handle<StandardMaterial>,
 }
 
-// fn grab_pickup(
-//     mut commands: Commands,
-//     mut cursor_icon: Single<&mut Visibility, With<Cursor>>,
-//     mut player: Single<(Entity, &mut Player), Without<PlayerCamera>>,
-//     camera: Single<&GlobalTransform, (With<PlayerCamera>, Without<Player>)>,
-//     mut pickups: Query<(Entity, &GlobalTransform, &mut Transform), With<Pickup>>,
-// ) {
+#[derive(Message)]
+pub struct PlaceMarker {
+    pub oil: Entity,
+}
 
-// }
+fn place_markers(
+    mut reader: MessageReader<PlaceMarker>,
+    mut commands: Commands,
+    marker_assets: Res<MarkerAssets>,
+    gltf: Res<Assets<Gltf>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    player: Single<(&GlobalTransform, &RayHits), With<Player>>,
+) {
+    let (player_transform, _) = player.into_inner();
+
+    for PlaceMarker { oil } in reader.read() {
+        let Some(gltf) = gltf.get(&marker_assets.model) else {
+            return;
+        };
+
+        let Some(light) = gltf.named_materials.get("light") else {
+            return;
+        };
+
+        *materials.get_mut(light).unwrap() = materials
+            .get(&marker_assets.material_light)
+            .unwrap()
+            .clone();
+
+        let origin = player_transform.transform_point((0.0, 0.5, 0.0).into());
+
+        commands.entity(*oil).despawn();
+
+        commands
+            .spawn((
+                SceneRoot(gltf.scenes[0].clone()),
+                Transform::from_translation(origin),
+                Visibility::default(),
+            ))
+            .with_children(|parent| {
+                parent.spawn((
+                    PointLight {
+                        color: Color::srgb(1., 0.5, 0.5),
+                        intensity: 5000.0,
+                        ..Default::default()
+                    },
+                    Transform::from_xyz(0.0, 0.0, 0.8),
+                ));
+            });
+    }
+}
 
 pub fn load_marker_gltf(
     mut commands: Commands,
@@ -47,50 +87,4 @@ pub fn load_marker_gltf(
         model,
         material_light,
     });
-}
-
-#[derive(Component)]
-pub struct Pickup;
-
-pub fn spawn_marker(
-    mut commands: Commands,
-    marker_assets: Res<MarkerAssets>,
-    gltf: Res<Assets<Gltf>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut loaded: Local<bool>,
-) {
-    if *loaded {
-        return;
-    }
-
-    let Some(gltf) = gltf.get(&marker_assets.model) else {
-        return;
-    };
-
-    *loaded = true;
-
-    let Some(light) = gltf.named_materials.get("light") else {
-        return;
-    };
-
-    *materials.get_mut(light).unwrap() = materials
-        .get(&marker_assets.material_light)
-        .unwrap()
-        .clone();
-
-    commands
-        .spawn((
-            SceneRoot(gltf.scenes[0].clone()),
-            Pickup,
-            Transform::from_xyz(-62.0, -84.0, 22.3).with_scale(Vec3::splat(1.1)),
-        ))
-        .with_children(|parent| {
-            parent.spawn((
-                PointLight {
-                    color: Color::srgb(1., 0.5, 0.5),
-                    ..Default::default()
-                },
-                Transform::from_xyz(0.0, 0.0, 0.5),
-            ));
-        });
 }

@@ -7,9 +7,8 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    marker::PlaceMarker,
-    player::{Player, PlayerAction, PlayerCamera, marker::Pickup},
-    speaker::{Speaker, SpeakerMode, SpeakerResource, grab, ungrab},
+    player::{Player, PlayerAction, PlayerCamera, marker::PlaceMarker},
+    speaker::{Pickup, Speaker, SpeakerMode, SpeakerResource, grab, ungrab},
     ui,
 };
 
