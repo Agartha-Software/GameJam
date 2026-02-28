@@ -61,7 +61,7 @@ fn load_ground_gltf(mut commands: Commands, assets: Res<AssetServer>) {
 fn play_background_audio(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         AudioPlayer::new(asset_server.load("ambience.wav")),
-        PlaybackSettings::LOOP.with_volume(bevy::audio::Volume::Linear(0.12)),
+        PlaybackSettings::LOOP.with_volume(bevy::audio::Volume::Linear(0.1)),
     ));
 }
 

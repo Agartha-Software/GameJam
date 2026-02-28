@@ -1,7 +1,6 @@
 use std::{f32::consts::PI, ops::Neg};
 
 use avian3d::prelude::*;
-use bevy::audio::SpatialScale;
 use bevy::prelude::*;
 use bevy::{
     app::{Plugin, Startup, Update},
@@ -18,29 +17,29 @@ use bevy::{
         world::Mut,
     },
     gltf::Gltf,
-    math::{Dir3, FloatPow, Vec3},
+    math::{Dir3, Vec3},
     pbr::StandardMaterial,
     scene::SceneRoot,
     time::Time,
     transform::components::{GlobalTransform, Transform},
 };
 
-use crate::{
-    player::{Player, PlayerAction},
-    speaker::Speaker,
-};
-
-const MONSTER_GRAVITY: f32 = 5.0;
+use crate::{player::Player, speaker::Speaker};
 
 const MONSTER_MAX_STALKING_SPEED: f32 = 40.0 / 3.6;
-const MONSTER_MIN_STALKING_SPEED: f32 = 20.0 / 3.6;
+const MONSTER_MIN_STALKING_SPEED: f32 = 15.0 / 3.6;
 
-const MONSTER_TURN_AMOUNT: f32 = 0.1;
+const MONSTER_TURN_AMOUNT: f32 = 0.01;
 
 const MONSTER_HOVER_HEIGHT: f32 = 8.0;
-const MONSTER_RAY_PRE_LEN: f32 = 4.0;
+const MONSTER_RAY_PRE_LEN: f32 = 40.0;
 
 const MONSTER_KILL_RADIUS: f32 = 20.0;
+
+const MONSTER_ORBIT_RADIUS: f32 = 40.0;
+const MONSTER_ORBIT_RADIUS_2: f32 = MONSTER_ORBIT_RADIUS * MONSTER_ORBIT_RADIUS;
+
+const TIMER_SPEED: f32 = 2.0;
 
 pub struct MonsterPlugin;
 
@@ -56,9 +55,9 @@ impl Plugin for MonsterPlugin {
 #[derive(Default)]
 pub enum MonsterAgro {
     #[default]
-    Stalking,
-    Hunting,
-    Bored,
+    Orbit,
+    Hunt,
+    Fade,
 }
 
 #[derive(Component)]
@@ -79,7 +78,7 @@ pub struct MonsterAssets {
 pub fn monster_system(
     time: Res<Time>,
     monsters: Query<(Entity, &mut Monster, &mut Transform, &mut LinearVelocity), Without<Speaker>>,
-    speakers: Query<(&Speaker, &Transform)>,
+    speakers: Query<(&Speaker, &GlobalTransform)>,
     mut casters: Query<
         (&RayHits, &mut Transform),
         (Without<Speaker>, Without<Monster>, Without<Player>),
@@ -89,7 +88,7 @@ pub fn monster_system(
         (Without<Speaker>, Without<Monster>),
     >,
 ) {
-    let sounds = speakers.iter().map(|(s, t)| (s, &t.translation));
+    let sounds = speakers.iter().map(|(s, t)| (s, t.translation()));
     let mut player = player.into_inner();
     for (entity, mut monster, mut transform, mut velocity) in monsters {
         if let Ok((rays, mut caster_transform)) = casters.get_mut(monster.caster) {
@@ -108,7 +107,7 @@ pub fn monster_system(
 }
 
 impl Monster {
-    pub fn behavior<'a, I: IntoIterator<Item = (&'a Speaker, &'a Vec3)>>(
+    pub fn behavior<'a, I: IntoIterator<Item = (&'a Speaker, Vec3)>>(
         &mut self,
         time: &Time,
         entity: Entity,
@@ -126,12 +125,12 @@ impl Monster {
         let sounds = sounds.into_iter();
         let Some(speaker) = sounds
             .map(|(s, v)| {
-                let v = v - (transform.translation - Vec3::new(0.0, 0.0, 0.5));
-                (s.loudness(&v), s, v)
+                let d = v - (transform.translation - Vec3::new(0.0, 0.0, 0.5));
+                (s.loudness(&v), s, d)
             })
             .reduce(|a, b| a.0.lt(&b.0).then_some(b).unwrap_or(a))
         else {
-            self.agro = MonsterAgro::Bored;
+            self.agro = MonsterAgro::Fade;
             return;
         };
 
@@ -140,32 +139,59 @@ impl Monster {
         self.direction += random_direction;
         self.direction = self.direction.clamp(-PI * 2.0, PI * 2.0);
 
-        match self.agro {
-            MonsterAgro::Stalking => {
-                let (loudness, speaker, v) = speaker;
-                velocity.0 += v * MONSTER_GRAVITY * time.delta_secs() * time.delta_secs();
-                let (v, m) = velocity.0.normalize_and_length();
-                velocity.0 = v * m.clamp(MONSTER_MIN_STALKING_SPEED, MONSTER_MAX_STALKING_SPEED);
+        {
+            // hover
+            let mut distance = rays
+                .first()
+                .map(|hit| hit.distance)
+                .unwrap_or(MONSTER_RAY_PRE_LEN)
+                - MONSTER_RAY_PRE_LEN;
+            transform.translation.z += distance.neg().max(0.0);
 
-                let mut distance =
-                    rays.first().map(|hit| hit.distance).unwrap_or(-10.0) - MONSTER_RAY_PRE_LEN;
-                transform.translation.z += distance.neg().max(0.0);
-                distance += velocity.z * 1.0;
-                velocity.0.z +=
-                    (MONSTER_HOVER_HEIGHT - distance).max(0.0).squared() * time.delta_secs();
-                if player.1.action != PlayerAction::Dead
-                    && player.2.translation().distance(transform.translation) < MONSTER_KILL_RADIUS
-                {
-                    player.1.action = PlayerAction::Dying(0.0, entity.clone());
-                }
+            distance += velocity.0.z * 1.0 / TIMER_SPEED;
+            velocity.0.z += (MONSTER_HOVER_HEIGHT - distance).max(0.0)
+                * time.delta_secs().min(1. / 15.)
+                * TIMER_SPEED;
+        }
+
+        match self.agro {
+            MonsterAgro::Orbit => {
+                let (loudness, speaker, d) = speaker;
+
+                let (d_radius, d_distance) = (d * Vec3::new(1., 1., 2.)).normalize_and_length();
+
+                // let d_distance = if d_distance.is_finite() {
+                //     d_distance
+                // } else {
+                //     MONSTER_ORBIT_RADIUS
+                // };
+
+                let attraction = ((d_distance / MONSTER_ORBIT_RADIUS) - 1.0).clamp(0.0, 1.0);
+
+                velocity.0 += attraction
+                    * d.normalize()
+                    * time.delta_secs().min(1. / 15.)
+                    * TIMER_SPEED
+                    * TIMER_SPEED;
+                let (v, m) = velocity.0.normalize_and_length();
+                velocity.0 = v * m.clamp(
+                    MONSTER_MIN_STALKING_SPEED * TIMER_SPEED,
+                    MONSTER_MAX_STALKING_SPEED * TIMER_SPEED,
+                );
+
+                // if player.1.action != PlayerAction::Dead
+                //     && player.2.translation().distance(transform.translation) < MONSTER_KILL_RADIUS
+                // {
+                //     player.1.action = PlayerAction::Dying(0.0, entity.clone());
+                // }
             }
-            MonsterAgro::Hunting => {}
+            MonsterAgro::Fade => {}
             _ => {} // MonsterAgro::Bored => todo!(),
         }
 
         velocity.0 = velocity.0.rotate_axis(
             Vec3::Z,
-            self.direction * MONSTER_TURN_AMOUNT * time.delta_secs(),
+            self.direction * MONSTER_TURN_AMOUNT * time.delta_secs().min(1. / 15.) * TIMER_SPEED,
         );
         transform.rotation = Transform::default()
             .looking_to(-velocity.0, Vec3::Z)
@@ -243,18 +269,17 @@ pub fn spawn_monster(
         SceneRoot(gltf.scenes[0].clone()),
         Monster {
             caster,
-            agro: MonsterAgro::Stalking,
+            agro: MonsterAgro::Orbit,
             agressivity: 0.0,
             direction: 0.0,
         },
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::from(Vec3::new(0.0, 5.0, 1.0)),
-        Transform::from_xyz(20.0, 3.0, 30.0),
+        Transform::from_xyz(20.0, 3.0, 40.0),
         Visibility::default(),
         AudioPlayer::new(asset_server.load("whimper.wav")),
         PlaybackSettings::LOOP
             .with_spatial(true)
-            .with_spatial_scale(SpatialScale::new(0.07))
-            .with_volume(bevy::audio::Volume::Linear(0.4)),
+            .with_volume(bevy::audio::Volume::Linear(2.)),
     ));
 }

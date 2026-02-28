@@ -16,6 +16,8 @@ use crate::player::movement::FLOOR_RAY_PRE_LEN;
 use crate::player::{Player, PlayerCamera, WorldModelCamera};
 
 pub fn spawn_player(mut commands: Commands) {
+    commands.insert_resource(bevy::audio::DefaultSpatialScale(bevy::audio::SpatialScale::new(0.1)));
+
     let camera = commands
         .spawn((
             PlayerCamera,
@@ -49,10 +51,10 @@ pub fn spawn_player(mut commands: Commands) {
                     Tonemapping::TonyMcMapface,
                     DistanceFog {
                         color: Color::srgb_u8(3, 3, 3),
-                        falloff: FogFalloff::Exponential { density: 0.25 },
+                        falloff: FogFalloff::Exponential { density: 0.1 },
                         ..default()
                     },
-                    SpatialListener::new(4.0),
+                    SpatialListener::new(40.0),
                 ),
                 (
                     SpotLight {

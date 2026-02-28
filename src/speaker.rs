@@ -120,7 +120,7 @@ fn spawn_speaker(
         PlaybackSettings::LOOP
             .with_spatial(true)
             .with_spatial_scale(SpatialScale::new(0.5))
-            .with_volume(bevy::audio::Volume::Linear(0.5)),
+            .with_volume(bevy::audio::Volume::Linear(2.)),
     ));
 }
 
@@ -192,7 +192,7 @@ pub fn speaker_preupdate(
             SpeakerMode::Ready
         } else {
             speaker_resource.time += (power * 40.0) * time.delta_secs();
-            SpeakerMode::Blink(speaker_resource.time.sin().abs().squared())
+            SpeakerMode::Blink(speaker_resource.time.sin().abs().squared().squared())
         }
     } else {
         SpeakerMode::None
