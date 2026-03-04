@@ -20,6 +20,7 @@ use bevy::{
 };
 
 use crate::node::OilNode;
+use crate::player::action::{THROW_RECOIL, THROW_VEL};
 
 pub struct SpeakerPlugin;
 
@@ -207,9 +208,12 @@ pub fn ungrab(
     tm: &mut Transform,
     player_tm: &GlobalTransform,
     player: Entity,
+    player_vel: &mut LinearVelocity,
+    entity_vel: &mut LinearVelocity,
+    throw: Vec3,
 ) {
     *tm = player_tm.compute_transform();
-    tm.translation.z += 0.7;
+    tm.translation.z += 0.8;
     tm.translation += player_tm.up() * 0.5;
     // commands.entity(entity).remove::<ChildOf>();
     commands.entity(player).detach_child(entity);
@@ -218,6 +222,11 @@ pub fn ungrab(
         .remove::<ColliderDisabled>()
         .remove::<RigidBodyDisabled>()
         .remove::<GravityScale>();
+
+    if throw.z > 0. {
+        entity_vel.0 += throw * THROW_VEL;
+        player_vel.0 -= throw * THROW_RECOIL;
+    }
 }
 
 pub fn grab(commands: &mut Commands, entity: Entity, tm: &mut Transform, player: Entity) {
