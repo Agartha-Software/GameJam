@@ -14,6 +14,7 @@ use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter}
 use crate::player::flashlight::Flashlight;
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
 use crate::player::{Player, PlayerCamera, WorldModelCamera};
+use crate::world::GROUND_MASK;
 
 pub fn spawn_player(mut commands: Commands) {
     commands.insert_resource(bevy::audio::DefaultSpatialScale(bevy::audio::SpatialScale::new(0.1)));
@@ -79,7 +80,7 @@ pub fn spawn_player(mut commands: Commands) {
         .with_max_distance(FLOOR_RAY_PRE_LEN)
         .with_max_hits(1)
         .with_query_filter(SpatialQueryFilter {
-            mask: LayerMask::ALL,
+            mask: GROUND_MASK,
             excluded_entities: Default::default(),
         });
 

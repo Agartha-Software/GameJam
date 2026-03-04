@@ -9,6 +9,12 @@ use crate::node::{OilAsset, load_oil, spawn_world_nodes};
 
 pub struct WorldPlugin;
 
+pub const GROUND_MASK: LayerMask = LayerMask(1 << 3);
+pub const GROUND_LAYER: CollisionLayers = CollisionLayers {
+    memberships: GROUND_MASK,
+    filters: LayerMask::ALL,
+};
+
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(Sprite3dPlugin)
@@ -131,6 +137,7 @@ fn spawn_ground(
             *loaded = true;
             if let Ok(e) = meshs.get_mut(entity) {
                 commands.entity(e).insert((
+                    GROUND_LAYER,
                     ColliderConstructor::TrimeshFromMesh,
                     NotShadowCaster,
                     RigidBody::Static,
