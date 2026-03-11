@@ -1,3 +1,4 @@
+use avian3d::parry::na::ComplexField;
 use avian3d::prelude::*;
 use bevy::audio::SpatialScale;
 use bevy::math::FloatPow;
@@ -19,6 +20,7 @@ use bevy::{
     transform::components::{GlobalTransform, Transform},
 };
 
+use crate::monster::Monster;
 use crate::node::OilNode;
 use crate::player::action::{THROW_RECOIL, THROW_VEL};
 
@@ -113,6 +115,8 @@ fn spawn_speaker(
     commands.spawn((
         SceneRoot(gltf.scenes[0].clone()),
         Pickup,
+        LinearDamping(0.4),
+        AngularDamping(0.4),
         Speaker::default(),
         Collider::cuboid(0.9, 0.75, 1.5),
         RigidBody::Dynamic,
@@ -120,9 +124,17 @@ fn spawn_speaker(
         AudioPlayer::new(asset_server.load("ping.mp3")),
         PlaybackSettings::LOOP
             .with_spatial(true)
-            .with_spatial_scale(SpatialScale::new(0.5))
-            .with_volume(bevy::audio::Volume::Linear(2.)),
-    ));
+            .with_volume(bevy::audio::Volume::Linear(1.)),
+    )).with_children(|parent| {
+                            parent.spawn((
+                                PointLight {
+                                    color: Color::srgb(1., 0.5, 0.5),
+                                    intensity: 5000.0,
+                                    ..Default::default()
+                                },
+                                Transform::from_xyz(0.0, 0.0, 0.2),
+                            ));
+                        });
 }
 
 const EMIT_RED: LinearRgba = LinearRgba {
@@ -145,8 +157,8 @@ const NODE_SPEAKER_ACTIVATION_DIST_2: f32 =
 
 fn bias(speaker: &GlobalTransform, node: &GlobalTransform) -> f32 {
     let d = node.translation() - speaker.translation();
-    let alignment = speaker.up().dot(d.normalize()) + 2.0;
-    let dist = d.length().max(NODE_SPEAKER_ACTIVATION_DIST);
+    let alignment = speaker.up().dot(d.normalize()).max(0.).squared() + 1.0;
+    let dist = d.length().max(NODE_SPEAKER_ACTIVATION_DIST).sqrt();
     (alignment / dist).max(0.0)
 }
 
@@ -178,7 +190,7 @@ pub fn apply_color(speaker_resource: &SpeakerResource, materials: &mut Assets<St
 
 pub fn speaker_preupdate(
     time: Res<Time>,
-    nodes: Query<&GlobalTransform, With<OilNode>>,
+    nodes: Query<&GlobalTransform, Or<(With<OilNode>, With<Monster>)>>,
     speaker: Single<&GlobalTransform, With<Speaker>>,
     mut speaker_resource: ResMut<SpeakerResource>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -192,7 +204,7 @@ pub fn speaker_preupdate(
         {
             SpeakerMode::Ready
         } else {
-            speaker_resource.time += (power * 40.0) * time.delta_secs();
+            speaker_resource.time += (power * 20.0) * time.delta_secs();
             SpeakerMode::Blink(speaker_resource.time.sin().abs().squared().squared())
         }
     } else {
