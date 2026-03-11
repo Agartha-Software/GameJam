@@ -1,6 +1,7 @@
 use std::{f32::consts::PI, ops::Neg};
 
 use avian3d::prelude::*;
+use bevy::audio::{PlaybackMode, Volume};
 use bevy::prelude::*;
 use bevy::{
     app::{Plugin, Startup, Update},
@@ -24,6 +25,9 @@ use bevy::{
     transform::components::{GlobalTransform, Transform},
 };
 
+use crate::node::OilNode;
+use crate::player::PlayerAction;
+use crate::player::flashlight::Flashlight;
 use crate::world::GROUND_MASK;
 use crate::{player::Player, speaker::Speaker};
 
@@ -33,7 +37,7 @@ const MONSTER_MIN_STALKING_SPEED: f32 = 15.0 / 3.6;
 const MONSTER_TURN_AMOUNT: f32 = 0.01;
 
 /// height to compensate for the body of the monster
-const MONSTER_BODY_HEIGHT: f32 = 0.8;
+const MONSTER_BODY_HEIGHT: f32 = 1.2;
 
 /// height for the center to hover at, including the body's width
 const MONSTER_HOVER_HEIGHT: f32 = 8.0;
@@ -41,10 +45,13 @@ const MONSTER_RAY_PRE_LEN: f32 = 40.0;
 
 const MONSTER_ANTICIPATION: f32 = 2.0;
 
-const MONSTER_KILL_RADIUS: f32 = 20.0;
+const MONSTER_KILL_RADIUS: f32 = 4.0;
+const MONSTER_SIGHT_RADIUS: f32 = 8.0;
 
 const MONSTER_ORBIT_RADIUS: f32 = 40.0;
 const MONSTER_ORBIT_RADIUS_2: f32 = MONSTER_ORBIT_RADIUS * MONSTER_ORBIT_RADIUS;
+
+const MONSTER_ATTACK_TRIGGER: f32 = 15.;
 
 pub struct MonsterPlugin;
 
@@ -57,7 +64,7 @@ impl Plugin for MonsterPlugin {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Reflect, Default, Debug)]
 pub enum MonsterAgro {
     #[default]
     Orbit,
@@ -65,11 +72,12 @@ pub enum MonsterAgro {
     Fade,
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct Monster {
     agro: MonsterAgro,
     agressivity: f32,
     direction: f32,
+    roar: Handle<AudioSource>,
     caster: Entity,
 }
 
@@ -82,7 +90,7 @@ pub struct MonsterAssets {
 
 pub fn monster_system(
     time: Res<Time>,
-    monsters: Query<(Entity, &mut Monster, &mut Transform, &mut LinearVelocity, &mut PlaybackSettings), Without<Speaker>>,
+    monsters: Query<(Entity, &mut Monster, &mut Transform, &mut LinearVelocity, &mut AudioPlayer, &mut PlaybackSettings), Without<Speaker>>,
     speakers: Query<(&Speaker, &GlobalTransform)>,
     mut casters: Query<
         (&RayHits, &mut Transform),
@@ -90,21 +98,25 @@ pub fn monster_system(
     >,
     player: Single<
         (Entity, &mut Player, &GlobalTransform, &mut Transform),
-        (Without<Speaker>, Without<Monster>),
+        Without<Monster>,
     >,
+    nodes: Query<(), With<OilNode>>,
+    mut commands: Commands,
 ) {
     let sounds = speakers.iter().map(|(s, t)| (s, t.translation()));
     let mut player = player.into_inner();
-    for (entity, mut monster, mut transform, mut velocity, mut playback) in monsters {
+    for (entity, mut monster, mut transform, mut velocity, mut audio, mut playback) in monsters {
         if let Ok((rays, mut caster_transform)) = casters.get_mut(monster.caster) {
             monster.behavior(
                 &time,
                 entity,
                 &mut transform,
                 &mut velocity,
-                &mut playback,
+                (&mut audio, &mut playback),
                 rays,
                 &mut player,
+                nodes.count(),
+                &mut commands,
                 sounds.clone(),
             );
             caster_transform.translation = transform.translation;
@@ -119,7 +131,7 @@ impl Monster {
         entity: Entity,
         transform: &mut Transform,
         velocity: &mut LinearVelocity,
-        playback: &mut PlaybackSettings,
+        audio: (&mut AudioPlayer, &mut PlaybackSettings),
         rays: &RayHits,
         player: &mut (
             Entity,
@@ -127,6 +139,8 @@ impl Monster {
             &GlobalTransform,
             Mut<'_, Transform>,
         ),
+        nodes: usize,
+        commands: &mut Commands,
         sounds: I,
     ) {
         let sounds = sounds.into_iter();
@@ -150,7 +164,7 @@ impl Monster {
 
         let next = match self.agro {
             MonsterAgro::Orbit => {
-                playback.volume = bevy::audio::Volume::Linear(2.);
+                audio.1.volume = bevy::audio::Volume::Linear(2.);
                 hover_height = MONSTER_HOVER_HEIGHT;
 
                 let (_loudness, _speaker, d, _pos) = speaker;
@@ -160,27 +174,47 @@ impl Monster {
 
                 let attraction = ((d_distance / MONSTER_ORBIT_RADIUS) - 1.0).clamp(0.0, 1.0);
 
-                velocity.0 += attraction * d_radius * time.delta_secs().min(1. / 15.);
+                velocity.0 += attraction * d_radius * time.delta_secs();
 
                 let (v, m) = velocity.0.normalize_and_length();
                 velocity.0 = v * m.clamp(MONSTER_MIN_STALKING_SPEED, MONSTER_MAX_STALKING_SPEED);
-                None
-            }
-            MonsterAgro::Fade => {
-                playback.volume = bevy::audio::Volume::Linear(1.5);
-                hover_height = MONSTER_HOVER_HEIGHT;
-
-                let (_loudness, _speaker, d, _pos) = speaker;
-
-                if d.length() > MONSTER_ORBIT_RADIUS {
+                self.agressivity += time.delta_secs();
+                if self.agressivity > 10. + MONSTER_ATTACK_TRIGGER * (nodes as f32) {
                     Some(MonsterAgro::Hunt)
                 } else {
                     None
                 }
             }
+            MonsterAgro::Fade => {
+                audio.1.volume = bevy::audio::Volume::Linear(1.5);
+                hover_height = MONSTER_HOVER_HEIGHT;
+
+                let (_loudness, _speaker, d, _pos) = speaker;
+
+                if d.length() > MONSTER_ORBIT_RADIUS {
+                    Some(MonsterAgro::Orbit)
+                } else {
+                    None
+                }
+            }
             MonsterAgro::Hunt => {
-                playback.volume = bevy::audio::Volume::Linear(4.);
-                let (_loudness, _speaker, d, pos) = speaker;
+                audio.1.volume = bevy::audio::Volume::Linear(4.);
+                let (_loudness, _speaker, mut d, pos) = speaker;
+
+
+                let player_d = player.2.translation() - transform.translation;
+                if player_d.length() < MONSTER_SIGHT_RADIUS {
+                    if player_d.length() < MONSTER_KILL_RADIUS {
+                        audio.0.0 = self.roar.clone();
+                        audio.1.mode = PlaybackMode::Once;
+                        audio.1.with_volume(Volume::Linear(4.));
+                        commands.entity(entity).remove::<SpatialAudioSink>();
+                        player.1.action = PlayerAction::Dying;
+                    }
+                    if player.1.light {
+                        d = player_d;
+                    }
+                }
 
                 let (real_dir, real_distance) = d.normalize_and_length();
 
@@ -198,9 +232,9 @@ impl Monster {
                 // let (d_anticipated_dir, _d_anticipated_distance) =
                 //     d_anticipated.normalize_and_length();
 
-                let swim_fwd = 0.5 * real_dir * time.delta_secs().min(1. / 15.);
+                let swim_fwd = 0.5 * real_dir * time.delta_secs();
 
-                // let swim_lat = 4. * d_anticipated_dir * time.delta_secs().min(1. / 15.);
+                // let swim_lat = 4. * d_anticipated_dir * time.delta_secs();
 
                 velocity.0 += swim_fwd.project_onto(velocity.0);
                 // velocity.0 += swim_lat.reject_from(velocity.0);
@@ -209,13 +243,13 @@ impl Monster {
 
                 velocity.0 = velocity
                     .0
-                    .rotate_towards(real_dir, time.delta_secs().min(1. / 15.) * (1. + velocity.0.angle_between(real_dir) / PI) / 2.0);
+                    .rotate_towards(real_dir, time.delta_secs() * (1. + velocity.0.angle_between(real_dir) / PI) / 2.0);
 
                 let (v, m) = velocity.0.normalize_and_length();
                 velocity.0 = v * m.clamp(MONSTER_MIN_STALKING_SPEED, MONSTER_MAX_STALKING_SPEED);
 
-                // a miss, the target is behind the velocity and the monster 'just' missed it (radius)
-                if d.dot(velocity.0) < 0. && real_distance < MONSTER_ORBIT_RADIUS / 2. {
+                if real_distance < MONSTER_KILL_RADIUS {
+                    self.agressivity = 0.;
                     Some(MonsterAgro::Fade)
                 } else {
                     None
@@ -235,12 +269,12 @@ impl Monster {
 
             // hover
             distance += velocity.0.z * MONSTER_ANTICIPATION;
-            velocity.0.z += (hover_height - distance).max(0.0) * time.delta_secs().min(1. / 15.);
+            velocity.0.z += (hover_height - distance).max(0.0) * time.delta_secs() * 0.5;
         }
 
         velocity.0 = velocity.0.rotate_axis(
             Vec3::Z,
-            self.direction * MONSTER_TURN_AMOUNT * time.delta_secs().min(1. / 15.),
+            self.direction * MONSTER_TURN_AMOUNT * time.delta_secs(),
         );
 
         transform.rotation = Transform::default()
@@ -320,7 +354,9 @@ pub fn spawn_monster(
 
     let caster = commands.spawn((Transform::default(), floor_cast)).id();
 
-    let mut collider = Collider::capsule_endpoints(1.8, (0., 0., -3.).into(), (0., 0., 2.).into());
+    let roar = asset_server.load("roar.wav");
+
+    let mut collider = Collider::capsule_endpoints(1.4, (0., 0., -3.).into(), (0., 0., 2.).into());
 
     // collider.set_scale((1., 2., 1.).into(), 6);
 
@@ -328,11 +364,13 @@ pub fn spawn_monster(
         SceneRoot(gltf.scenes[0].clone()),
         Monster {
             caster,
-            agro: MonsterAgro::Hunt,
+            agro: MonsterAgro::Orbit,
             agressivity: 0.0,
             direction: 0.0,
+            roar,
         },
         collider,
+        Friction::ZERO.with_combine_rule(CoefficientCombine::Min),
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::from(Vec3::new(0.0, 5.0, 1.0)),
         Transform::from_xyz(20.0, 3.0, 40.0),

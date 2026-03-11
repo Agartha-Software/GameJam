@@ -9,7 +9,7 @@ use bevy::post_process::effect_stack::ChromaticAberration;
 use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
 
-use avian3d::prelude::{LayerMask, LinearVelocity, RayCaster, SpatialQueryFilter};
+use avian3d::prelude::{LinearVelocity, RayCaster, SpatialQueryFilter};
 
 use crate::player::flashlight::Flashlight;
 use crate::player::movement::FLOOR_RAY_PRE_LEN;
