@@ -2,25 +2,25 @@ use avian3d::{math::PI, prelude::*};
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*, window::CursorOptions};
 
 use crate::{
-    player::{Player, PlayerCamera},
+    player::{Player, PlayerAction, PlayerCamera},
     settings::{self, Settings},
 };
 
 /// Acceleration in m/s^2
-pub const PLAYER_ACCELERATION: f32 = 220.0 / 3.6;
+pub const PLAYER_ACCELERATION: f32 = 4.20 / 3.6;
 
 /// Velocity in m/s calculated from km/h
-pub const PLAYER_MAX_SPEED: f32 = 2.9 / 3.6;
+pub const PLAYER_MAX_SPEED: f32 = 3.2 / 3.6;
 /// Velocity squared to optimize comparaisons
 pub const PLAYER_MAX_SPEED_2: f32 = PLAYER_MAX_SPEED * PLAYER_MAX_SPEED;
 
 // Effective gravity in m/s^2 in Z
-pub const PLAYER_BUOYANCY: f32 = -20.;
+pub const PLAYER_BUOYANCY: f32 = -0.15;
 
 // Jump velocity
 pub const PLAYER_JUMP_IMPULSE: f32 = 0.4;
 
-pub const FLOOR_RAY_PRE_LEN: f32 = 1.0;
+pub const FLOOR_RAY_PRE_LEN: f32 = 2.0;
 
 fn move_player_camera(
     delta: &Vec2,
@@ -84,16 +84,17 @@ pub fn move_realistic(
                 velocity.0.z = PLAYER_JUMP_IMPULSE;
             }
         }
+        transform.translation.z += (FLOOR_RAY_PRE_LEN - ground.distance - 1.).max(0.);
         transform.translation.z += (FLOOR_RAY_PRE_LEN - ground.distance) * time.delta_secs();
     } else {
-        velocity.0.z += PLAYER_BUOYANCY * time.delta_secs() * time.delta_secs();
+        velocity.0.z += PLAYER_BUOYANCY * time.delta_secs();
     }
 
     if wishdir != Vec2::ZERO {
         let mut moveforce = wishdir * PLAYER_MAX_SPEED - velocity.0.xy();
 
         moveforce /= PLAYER_MAX_SPEED;
-        moveforce *= PLAYER_ACCELERATION * time.delta_secs() * time.delta_secs();
+        moveforce *= PLAYER_ACCELERATION * time.delta_secs();
 
         if floor_hits.is_empty() {
             moveforce *= 0.1;
@@ -140,6 +141,9 @@ pub fn move_player(
     camera: Single<&mut Transform, (With<PlayerCamera>, Without<Player>)>,
     settings: Res<Settings>,
 ) {
+    if matches!(player.1.action, PlayerAction::Dead) {
+        return;
+    }
     let (mut player_transform, player, floor_hits, velocity) = player.into_inner();
     let mut camera_transform = camera.into_inner();
 

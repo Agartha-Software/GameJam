@@ -1,25 +1,62 @@
 use std::{
     ops::{Add, Sub},
-    process::exit,
 };
 
 use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 
 use crate::{
+    monster::Monster,
     player::{Player, PlayerAction, PlayerCamera, marker::TryPlaceMarker},
     speaker::{Pickup, grab, ungrab},
-    ui,
+    ui::{self, DeathScreen, OverlayImage},
 };
 
 pub const THROW_VEL: f32 = 2.0;
 pub const THROW_RECOIL: f32 = 0.5;
 
+#[derive(Message)]
+pub struct PlayerDeath;
+
+pub fn player_death(
+    mut ui: Single<&mut ImageNode, With<OverlayImage>>,
+    mut screen: Single<&mut Visibility, With<DeathScreen>>,
+    mut death: MessageReader<PlayerDeath>,
+    mut timeout: Local<Option<f32>>,
+    time: Res<Time<Real>>,
+    mut exit: MessageWriter<AppExit>,
+    spatial_audio: Query<&mut SpatialAudioSink, Without<Monster>>,
+    audio: Query<&mut AudioSink>,
+) {
+    if let Some(_) = death.read().next() {
+        timeout.get_or_insert(1.0);
+        **screen = Visibility::Visible;
+        for s in spatial_audio {
+            s.stop();
+        }
+        for s in audio {
+            s.stop();
+        }
+    }
+    if let Some(timeout) = timeout.as_mut() {
+        *timeout -= time.delta_secs() / 3.0;
+        ui.color.set_alpha(timeout.clamp(0., 1.));
+        if *timeout < 0. {
+            exit.write(AppExit::Success);
+        }
+    }
+}
+
 pub fn player_action(
     mut commands: Commands,
     time: Res<Time>,
     player: Single<
-        (&GlobalTransform, &mut Transform, &mut Player, &mut LinearVelocity),
+        (
+            &GlobalTransform,
+            &mut Transform,
+            &mut Player,
+            &mut LinearVelocity,
+        ),
         (Without<PlayerCamera>, Without<Pickup>),
     >,
     mut place_speaker: MessageWriter<TryPlaceMarker>,
@@ -30,13 +67,19 @@ pub fn player_action(
         (With<PlayerCamera>, Without<Pickup>, Without<Player>),
     >,
     mut pickups: Query<
-        (Entity, &GlobalTransform, &mut Transform, &mut LinearVelocity),
+        (
+            Entity,
+            &GlobalTransform,
+            &mut Transform,
+            &mut LinearVelocity,
+        ),
         (With<Pickup>, Without<Player>, Without<PlayerCamera>),
     >,
     entities: Query<
         (Entity, &GlobalTransform),
         (Without<Player>, Without<PlayerCamera>, Without<Pickup>),
     >,
+    mut death: MessageWriter<PlayerDeath>,
 ) {
     let (player_global, mut player_tm, mut player, mut player_vel) = player.into_inner();
 
@@ -97,25 +140,9 @@ pub fn player_action(
                 None
             }
         }
-        PlayerAction::Dying(timeout, e) => {
-            if timeout.gt(&1.0) {
-                exit(0);
-                Some(PlayerAction::Dead)
-            } else {
-                if let Ok((_, global)) = entities.get(e.entity()) {
-                    let dxy = (global.translation() - player_global.translation()).xy();
-                    let z = dxy.angle_to(player_global.up().xy());
-
-                    let dz = (global.translation() - camera_global.translation()).z;
-
-                    let x = (dz / dxy.length()).atan();
-
-                    player_tm.rotation *= Quat::from_rotation_z(-z);
-                    camera_tm.rotation = Quat::from_rotation_x(90f32.to_radians() + x);
-                }
-
-                Some(PlayerAction::Dying(timeout + time.delta_secs(), e.clone()))
-            }
+        PlayerAction::Dying => {
+            death.write(PlayerDeath);
+            Some(PlayerAction::Dead)
         }
         _ => None,
     };

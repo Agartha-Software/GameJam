@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Duration};
 
 use avian3d::prelude::*;
 use bevy::{light::NotShadowCaster, prelude::*};
@@ -33,7 +33,7 @@ impl Plugin for WorldPlugin {
     }
 }
 
-fn setup_world(mut ambient: ResMut<GlobalAmbientLight>, mut commands: Commands) {
+fn setup_world(mut ambient: ResMut<GlobalAmbientLight>, mut commands: Commands, mut time: ResMut<Time<Virtual>>) {
     commands.insert_resource(AtmosphereModel::new(bevy_atmosphere::prelude::Gradient {
         sky: Color::srgb_u8(7, 9, 18).into(),
         horizon: Color::srgb_u8(3, 3, 3).into(),
@@ -52,6 +52,9 @@ fn setup_world(mut ambient: ResMut<GlobalAmbientLight>, mut commands: Commands) 
         brightness: 10000.0,
         affects_lightmapped_meshes: true,
     };
+
+    time.set_max_delta(Duration::from_secs_f32(1./15.));
+    // time.set_relative_speed_f64(1.);
 }
 
 #[derive(Component)]

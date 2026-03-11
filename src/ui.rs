@@ -5,6 +5,8 @@ use bevy::{
 };
 use bevy_aspect_ratio_mask::Hud;
 
+use crate::player::{Player, PlayerAction};
+
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
@@ -35,11 +37,27 @@ pub struct OverlayImage {
     accu: Vec2,
 }
 
+#[derive(Component, Default)]
+pub struct DeathScreen;
+
 #[derive(Component)]
 pub struct Cursor;
 
 fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>, hud: Res<Hud>) {
     commands.entity(hud.0).with_children(|parent| {
+        parent.spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                align_self: AlignSelf::Stretch,
+                justify_self: JustifySelf::Stretch,
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                ..Default::default()
+            },
+            DeathScreen,
+            BackgroundColor(Color::BLACK),
+            Visibility::Hidden,
+        ));
         parent.spawn((
             Node {
                 align_self: AlignSelf::Stretch,
@@ -109,8 +127,12 @@ pub struct CenteredText;
 fn move_overlay(
     overlay: Single<(&mut Node, &mut OverlayImage), With<OverlayImage>>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
+    player: Single<&Player>,
     time: Res<Time>,
 ) {
+    if matches!(player.action, PlayerAction::Dead) {
+        return;
+    }
     let (mut node, mut overlay_data) = overlay.into_inner();
     overlay_data.accu += accumulated_mouse_motion.delta / 4.0;
     overlay_data.accu = overlay_data
