@@ -90,23 +90,36 @@ pub struct MonsterAssets {
 
 pub fn monster_system(
     time: Res<Time>,
-    monsters: Query<(Entity, &mut Monster, &mut Transform, &mut LinearVelocity, &mut AudioPlayer, &mut PlaybackSettings), Without<Speaker>>,
+    monsters: Query<
+        (
+            Entity,
+            &mut Monster,
+            &mut Transform,
+            &mut LinearVelocity,
+            &mut AudioPlayer,
+            &mut PlaybackSettings,
+            &Children,
+        ),
+        Without<Speaker>,
+    >,
+    traverse: Query<&Children>,
+    mut morph_weights: Query<(Entity, &mut MorphWeights)>,
     speakers: Query<(&Speaker, &GlobalTransform)>,
     mut casters: Query<
         (&RayHits, &mut Transform),
         (Without<Speaker>, Without<Monster>, Without<Player>),
     >,
-    player: Single<
-        (Entity, &mut Player, &GlobalTransform, &mut Transform),
-        Without<Monster>,
-    >,
+    player: Single<(Entity, &mut Player, &GlobalTransform, &mut Transform), Without<Monster>>,
     nodes: Query<(), With<OilNode>>,
     mut commands: Commands,
 ) {
     let sounds = speakers.iter().map(|(s, t)| (s, t.translation()));
     let mut player = player.into_inner();
-    for (entity, mut monster, mut transform, mut velocity, mut audio, mut playback) in monsters {
+    for (entity, mut monster, mut transform, mut velocity, mut audio, mut playback, children) in
+        monsters
+    {
         if let Ok((rays, mut caster_transform)) = casters.get_mut(monster.caster) {
+            let mut maw = None;
             monster.behavior(
                 &time,
                 entity,
@@ -116,9 +129,31 @@ pub fn monster_system(
                 rays,
                 &mut player,
                 nodes.count(),
+                &mut maw,
                 &mut commands,
                 sounds.clone(),
             );
+            if let Some(maw) = maw {
+                let stretch  = |x: f32| -4.0 * x * x + 4.0 * x;
+                for child in children {
+                    if let Ok(grandchildren) = traverse.get(*child) {
+                        for grandchild in grandchildren {
+                            match morph_weights.get_mut(*grandchild) {
+                                Ok(mut morph_weights) =>  {
+                                    morph_weights
+                                    .1
+                                    .weights_mut().get_mut(0..2).map(|w| w.copy_from_slice(&[maw, stretch(maw)]));
+                                }
+                                Err(_) => {
+                                    commands
+                                        .entity(*child)
+                                        .insert(MorphWeights::new(vec![maw, stretch(maw)], None).unwrap());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             caster_transform.translation = transform.translation;
         }
     }
@@ -140,6 +175,7 @@ impl Monster {
             Mut<'_, Transform>,
         ),
         nodes: usize,
+        maw: &mut Option<f32>,
         commands: &mut Commands,
         sounds: I,
     ) {
@@ -201,7 +237,6 @@ impl Monster {
                 audio.1.volume = bevy::audio::Volume::Linear(4.);
                 let (_loudness, _speaker, mut d, pos) = speaker;
 
-
                 let player_d = player.2.translation() - transform.translation;
                 if player_d.length() < MONSTER_SIGHT_RADIUS {
                     if player_d.length() < MONSTER_KILL_RADIUS {
@@ -226,6 +261,8 @@ impl Monster {
                     pos + MONSTER_HOVER_HEIGHT
                 };
 
+                *maw = Some((1. - real_distance / MONSTER_ORBIT_RADIUS).clamp(0., 1.));
+
                 // let d_anticipated =
                 //     pos - (transform.translation + velocity.0 * MONSTER_ANTICIPATION * 2.);
 
@@ -241,9 +278,10 @@ impl Monster {
 
                 // Vec3::rotat
 
-                velocity.0 = velocity
-                    .0
-                    .rotate_towards(real_dir, time.delta_secs() * (1. + velocity.0.angle_between(real_dir) / PI) / 2.0);
+                velocity.0 = velocity.0.rotate_towards(
+                    real_dir,
+                    time.delta_secs() * (1. + velocity.0.angle_between(real_dir) / PI) / 2.0,
+                );
 
                 let (v, m) = velocity.0.normalize_and_length();
                 velocity.0 = v * m.clamp(MONSTER_MIN_STALKING_SPEED, MONSTER_MAX_STALKING_SPEED);
@@ -282,6 +320,9 @@ impl Monster {
             .rotation;
 
         if let Some(next) = next {
+            if maw.is_none() {
+                *maw = Some(0.);
+            }
             eprintln!("Changing from {:?} to {:?}", self.agro, next);
             self.agro = next;
         }
@@ -370,6 +411,7 @@ pub fn spawn_monster(
             roar,
         },
         collider,
+        MorphWeights::new(vec![0.0, 0.0], None).unwrap(),
         Friction::ZERO.with_combine_rule(CoefficientCombine::Min),
         avian3d::dynamics::prelude::RigidBody::Kinematic,
         LinearVelocity::from(Vec3::new(0.0, 5.0, 1.0)),
