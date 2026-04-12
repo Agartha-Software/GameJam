@@ -4,7 +4,8 @@ use bevy::{ecs::resource::Resource, input::keyboard::KeyCode};
 pub struct Settings {
     pub camera_sensitivity: f32,
     pub inputs: Inputs,
-    pub chromatic_aberation: f32,
+    pub debug: bool,
+    pub debug_display: bool,
 }
 
 pub struct Inputs {
@@ -13,6 +14,7 @@ pub struct Inputs {
     pub right: KeyCode,
     pub back: KeyCode,
     pub jump: KeyCode,
+    pub down: KeyCode,
 }
 
 impl Default for Inputs {
@@ -23,6 +25,7 @@ impl Default for Inputs {
             right: KeyCode::KeyD,
             back: KeyCode::KeyS,
             jump: KeyCode::Space,
+            down: KeyCode::ShiftLeft,
         }
     }
 }
@@ -32,7 +35,8 @@ impl Default for Settings {
         Self {
             camera_sensitivity: 1.0,
             inputs: Default::default(),
-            chromatic_aberation: 1.2,
+            debug: false,
+            debug_display: false,
         }
     }
 }

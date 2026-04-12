@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
-use crate::player::{Player, spawn_player};
+use crate::player::{Player, spawn::spawn_player};
 
 pub struct ParticlePlugin;
 
