@@ -11,7 +11,9 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_aspect_ratio_mask",
  "bevy_atmosphere",
+ "bevy_ecs",
  "bevy_hanabi",
+ "bevy_reflect",
  "bevy_sprite3d",
  "rand",
 ]
